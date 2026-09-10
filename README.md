@@ -6,9 +6,18 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 The application is being built incrementally as a static client-side web app. Version 0.1a will provide an interactive map, browser geolocation, historical RainViewer radar frames, timeline playback, and radar opacity controls.
 
+## Built through human-AI collaboration
+
+RainWatch is a Codex-assisted project. The project owner defines the goals, constraints, and product decisions and reviews the results; OpenAI Codex assists with implementation, testing, and documentation.
+
+## Documentation
+
+- [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-10.md`](docs/journal/2026-09-10.md) records implementation details, verification, changed files, and commit subjects.
+
 ## Current status
 
-This initial commit contains the React, TypeScript, and Vite foundation. Radar and mapping features have not been implemented yet.
+The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive, interactive MapLibre map with zoom, pan, scale, and attribution controls. Radar and geolocation features have not been implemented yet.
 
 ## Prerequisites
 
@@ -54,25 +63,26 @@ RainWatch uses:
 
 - React and TypeScript for the interface
 - Vite for local development and production builds
-- MapLibre GL JS for the interactive map (planned)
+- MapLibre GL JS for the interactive map
 - The browser Geolocation API for the user's position (planned)
 - RainViewer as the first radar-data provider (planned)
 
 External radar integration will live behind a small provider abstraction under `src/services/radar/`. UI components will consume provider-neutral radar frame data instead of constructing RainViewer URLs directly.
 
+The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
+
 No backend server, database, authentication system, or API key is required for version 0.1a.
 
 ## Known limitations
 
-- The current page is only a project-ready placeholder.
-- The map, location handling, radar layer, timeline, playback, and opacity control remain to be implemented.
+- The current map starts at a general continental United States view.
+- Location handling, the radar layer, timeline, playback, and opacity control remain to be implemented.
 - RainViewer data availability and retention determine which historical frames can be shown.
 
 ## Planned implementation order
 
-1. Interactive map
-2. Browser geolocation
-3. One RainViewer radar frame
-4. Radar timeline
-5. Playback controls
-6. Opacity control and responsive cleanup
+1. Browser geolocation
+2. One RainViewer radar frame
+3. Radar timeline
+4. Playback controls
+5. Opacity control and responsive cleanup
