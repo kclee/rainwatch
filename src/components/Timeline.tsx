@@ -9,14 +9,18 @@ const frameTimeFormatter = new Intl.DateTimeFormat(undefined, {
 
 interface TimelineProps {
   frames: RadarFrame[]
+  isPlaying: boolean
   selectedIndex: number
   onSelectFrame: (index: number) => void
+  onTogglePlayback: () => void
 }
 
 export function Timeline({
   frames,
+  isPlaying,
   selectedIndex,
   onSelectFrame,
+  onTogglePlayback,
 }: TimelineProps) {
   const selectedFrame = frames[selectedIndex]
   if (!selectedFrame) {
@@ -30,7 +34,16 @@ export function Timeline({
     <section className="timeline" aria-label="Historical radar timeline">
       <button
         type="button"
-        className="timeline-button"
+        className="timeline-button timeline-button--play"
+        onClick={onTogglePlayback}
+        disabled={frames.length < 2}
+        aria-pressed={isPlaying}
+      >
+        {isPlaying ? 'Pause' : 'Play'}
+      </button>
+      <button
+        type="button"
+        className="timeline-button timeline-button--previous"
         onClick={() => onSelectFrame(selectedIndex - 1)}
         disabled={selectedIndex === 0}
       >
@@ -49,7 +62,7 @@ export function Timeline({
           onChange={(event) => onSelectFrame(Number(event.target.value))}
         />
       </div>
-      <div className="timeline-time" aria-live="polite">
+      <div className="timeline-time" aria-live={isPlaying ? 'off' : 'polite'}>
         <time dateTime={selectedDate.toISOString()}>{selectedTime}</time>
         <span>
           Frame {selectedIndex + 1} of {frames.length}
@@ -57,7 +70,7 @@ export function Timeline({
       </div>
       <button
         type="button"
-        className="timeline-button"
+        className="timeline-button timeline-button--next"
         onClick={() => onSelectFrame(selectedIndex + 1)}
         disabled={selectedIndex === frames.length - 1}
       >

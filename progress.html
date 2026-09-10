@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Radar timeline complete</span>
+      <span class="status">Radar playback complete</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Radar playback.</strong> Add play and pause controls that automatically advance through the available historical frames and loop cleanly from the newest frame to the oldest.</p>
+      <p><strong>Radar opacity and responsive cleanup.</strong> Let the user balance radar against roads and geography, then complete the version 0.1a desktop and phone-layout verification.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -85,6 +85,7 @@
           <li class="done">Newest historical radar frame</li>
           <li class="done">Historical frame slider and timestamps</li>
           <li class="done">Previous and next frame controls</li>
+          <li class="done">Looping Play and Pause animation</li>
           <li class="done">Radar attribution and failure states</li>
           <li class="done">Build, lint, and browser checks</li>
         </ul>
@@ -93,7 +94,6 @@
       <article class="card">
         <h2>Remaining for 0.1a</h2>
         <ol>
-          <li class="pending">Play and pause controls</li>
           <li class="pending">Radar opacity control</li>
           <li class="pending">Responsive and error-state cleanup</li>
         </ol>
@@ -125,6 +125,8 @@
           <li>The radar status remained compact and the page had no horizontal overflow at phone width.</li>
           <li>Previous, Next, Home, and End navigation selected the expected historical frames.</li>
           <li>At phone width, timeline buttons remained 44 pixels tall and the slider used the full available width.</li>
+          <li>Playback looped from frame 13 to frame 1, advanced to frame 2, and remained stable after Pause.</li>
+          <li>Play, Previous, and Next remained 44 pixels tall at phone width.</li>
         </ul>
       </article>
     </section>

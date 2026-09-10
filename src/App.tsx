@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
+import { RADAR_PLAYBACK_INTERVAL_MS } from './config/radar'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useRadarFrames } from './hooks/useRadarFrames'
 
@@ -15,12 +16,28 @@ function App() {
   const { location, message, requestLocation, status } = useGeolocation()
   const radar = useRadarFrames()
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
   const isRequesting = status === 'requesting'
   const buttonLabel = location ? 'Return to my location' : 'Use my location'
   const selectedFrameIndex =
     currentFrameIndex ?? Math.max(radar.frames.length - 1, 0)
   const selectedFrame =
     radar.frames[selectedFrameIndex] ?? radar.latestFrame
+
+  useEffect(() => {
+    if (!isPlaying || radar.frames.length < 2) {
+      return
+    }
+
+    const interval = window.setInterval(() => {
+      setCurrentFrameIndex((currentIndex) => {
+        const activeIndex = currentIndex ?? radar.frames.length - 1
+        return (activeIndex + 1) % radar.frames.length
+      })
+    }, RADAR_PLAYBACK_INTERVAL_MS)
+
+    return () => window.clearInterval(interval)
+  }, [isPlaying, radar.frames.length])
 
   return (
     <main className="app-shell">
@@ -54,8 +71,10 @@ function App() {
       <WeatherMap radarFrame={selectedFrame} userLocation={location} />
       <Timeline
         frames={radar.frames}
+        isPlaying={isPlaying}
         selectedIndex={selectedFrameIndex}
         onSelectFrame={setCurrentFrameIndex}
+        onTogglePlayback={() => setIsPlaying((playing) => !playing)}
       />
     </main>
   )

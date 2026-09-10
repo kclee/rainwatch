@@ -134,7 +134,7 @@ h1 {
 
 .timeline {
   display: grid;
-  grid-template-columns: auto minmax(12rem, 1fr) minmax(9rem, auto) auto;
+  grid-template-columns: auto auto minmax(12rem, 1fr) minmax(9rem, auto) auto;
   align-items: center;
   gap: 0.75rem;
   padding: 0.8rem;
@@ -157,6 +157,16 @@ h1 {
 
 .timeline-button:hover:not(:disabled) {
   background: #075985;
+}
+
+.timeline-button--play {
+  border-color: rgba(117, 230, 164, 0.45);
+  color: #dcfce7;
+  background: #166534;
+}
+
+.timeline-button--play:hover:not(:disabled) {
+  background: #15803d;
 }
 
 .timeline-button:focus-visible,
@@ -244,7 +254,7 @@ h1 {
   }
 
   .timeline {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.5rem;
     padding: 0.65rem;
     border-width: 1px 0 0;
@@ -257,13 +267,25 @@ h1 {
   }
 
   .timeline-time {
-    grid-column: 2;
+    grid-column: 1 / -1;
     grid-row: 2;
     min-width: 0;
   }
 
   .timeline-button {
-    min-width: 5.25rem;
-    grid-row: 2;
+    min-width: 0;
+    grid-row: 3;
+  }
+
+  .timeline-button--play {
+    grid-column: 1;
+  }
+
+  .timeline-button--previous {
+    grid-column: 2;
+  }
+
+  .timeline-button--next {
+    grid-column: 3;
   }
 }

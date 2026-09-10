@@ -17,7 +17,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive MapLibre map with browser geolocation and selectable historical RainViewer radar frames. Playback and the opacity control have not been implemented yet.
+The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive MapLibre map with browser geolocation, selectable historical RainViewer radar frames, and looping Play/Pause animation. The opacity control has not been implemented yet.
 
 ## Prerequisites
 
@@ -80,11 +80,11 @@ No backend server, database, authentication system, or API key is required for v
 - The map starts at a general continental United States view until the user explicitly requests location access.
 - Location accuracy depends on the browser, device, network, and operating-system location services.
 - The timeline is limited to the historical frames currently returned by RainViewer, typically approximately two hours.
+- Playback advances every 800 milliseconds and loops from the newest frame to the oldest.
 - Radar opacity is temporarily fixed at 68 percent.
-- Playback and the opacity control remain to be implemented.
+- The opacity control remains to be implemented.
 - RainViewer data availability and retention determine which historical frames can be shown.
 
 ## Planned implementation order
 
-1. Playback controls
-2. Opacity control and responsive cleanup
+1. Opacity control and responsive cleanup

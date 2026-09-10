@@ -1,0 +1,1 @@
+export const RADAR_PLAYBACK_INTERVAL_MS = 800
