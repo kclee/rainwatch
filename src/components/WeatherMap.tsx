@@ -9,6 +9,7 @@ import {
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { RasterTileSource } from 'maplibre-gl'
 import { mapConfig } from '../config/map'
+import { DEFAULT_RADAR_OPACITY } from '../config/radar'
 import type { RadarFrame, UserLocation } from '../types/weather'
 
 const RADAR_SOURCE_ID = 'rainwatch-radar'
@@ -16,10 +17,15 @@ const RADAR_LAYER_ID = 'rainwatch-radar-layer'
 
 interface WeatherMapProps {
   radarFrame: RadarFrame | null
+  radarOpacity: number
   userLocation: UserLocation | null
 }
 
-export function WeatherMap({ radarFrame, userLocation }: WeatherMapProps) {
+export function WeatherMap({
+  radarFrame,
+  radarOpacity,
+  userLocation,
+}: WeatherMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
   const locationMarkerRef = useRef<Marker | null>(null)
@@ -115,13 +121,22 @@ export function WeatherMap({ radarFrame, userLocation }: WeatherMapProps) {
         type: 'raster',
         source: RADAR_SOURCE_ID,
         paint: {
-          'raster-opacity': 0.68,
+          'raster-opacity': DEFAULT_RADAR_OPACITY,
           'raster-fade-duration': 0,
         },
       },
       firstSymbolLayer,
     )
   }, [isMapReady, radarFrame])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isMapReady || !map.getLayer(RADAR_LAYER_ID)) {
+      return
+    }
+
+    map.setPaintProperty(RADAR_LAYER_ID, 'raster-opacity', radarOpacity)
+  }, [isMapReady, radarOpacity])
 
   useEffect(() => {
     const map = mapRef.current

@@ -134,7 +134,7 @@ h1 {
 
 .timeline {
   display: grid;
-  grid-template-columns: auto auto minmax(12rem, 1fr) minmax(9rem, auto) auto;
+  grid-template-columns: auto auto minmax(10rem, 1fr) minmax(8rem, auto) auto minmax(8rem, 0.7fr);
   align-items: center;
   gap: 0.75rem;
   padding: 0.8rem;
@@ -219,6 +219,35 @@ h1 {
   font-size: 0.72rem;
 }
 
+.opacity-control {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 8rem;
+}
+
+.opacity-control label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.opacity-control output {
+  color: #e0f2fe;
+}
+
+.opacity-control input {
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  accent-color: #38bdf8;
+  cursor: pointer;
+}
+
 @media (max-width: 40rem) {
   .app-shell {
     grid-template-rows: auto minmax(24rem, 1fr) auto;
@@ -227,23 +256,40 @@ h1 {
   }
 
   .app-header {
+    align-items: start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     padding: 0.85rem 1rem;
   }
 
   .location-controls {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .location-button {
+    justify-self: end;
+    padding-inline: 0.7rem;
+    white-space: nowrap;
   }
 
   .radar-status {
     max-width: 12rem;
-    justify-self: end;
+    justify-self: start;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .location-status {
+    width: 100%;
+    max-width: none;
+    display: block;
+    text-align: left;
+  }
+
+  .location-status--idle {
     display: none;
   }
 
@@ -254,6 +300,7 @@ h1 {
   }
 
   .timeline {
+    min-width: 0;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.5rem;
     padding: 0.65rem;
@@ -262,6 +309,7 @@ h1 {
   }
 
   .timeline-track {
+    min-width: 0;
     grid-column: 1 / -1;
     grid-row: 1;
   }
@@ -287,5 +335,11 @@ h1 {
 
   .timeline-button--next {
     grid-column: 3;
+  }
+
+  .opacity-control {
+    min-width: 0;
+    grid-column: 1 / -1;
+    grid-row: 4;
   }
 }

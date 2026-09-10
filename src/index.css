@@ -15,14 +15,12 @@
 }
 
 html {
-  min-width: 320px;
   background:
     radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.18), transparent 35%),
     #07111f;
 }
 
 body {
-  min-width: 320px;
   min-height: 100vh;
   margin: 0;
 }

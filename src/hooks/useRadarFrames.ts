@@ -22,6 +22,7 @@ export function useRadarFrames() {
 
   useEffect(() => {
     const controller = new AbortController()
+    let isActive = true
     const timeout = window.setTimeout(
       () => controller.abort(),
       REQUEST_TIMEOUT_MS,
@@ -31,6 +32,9 @@ export function useRadarFrames() {
       .getHistoricalFrames(controller.signal)
       .then((frames) => {
         window.clearTimeout(timeout)
+        if (!isActive) {
+          return
+        }
 
         if (frames.length === 0) {
           setState({
@@ -50,6 +54,9 @@ export function useRadarFrames() {
       })
       .catch((error: unknown) => {
         window.clearTimeout(timeout)
+        if (!isActive) {
+          return
+        }
 
         if (controller.signal.aborted) {
           setState({
@@ -71,6 +78,7 @@ export function useRadarFrames() {
       })
 
     return () => {
+      isActive = false
       window.clearTimeout(timeout)
       controller.abort()
     }

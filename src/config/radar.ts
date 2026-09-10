@@ -1,1 +1,2 @@
+export const DEFAULT_RADAR_OPACITY = 0.7
 export const RADAR_PLAYBACK_INTERVAL_MS = 800

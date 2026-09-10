@@ -17,7 +17,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive MapLibre map with browser geolocation, selectable historical RainViewer radar frames, and looping Play/Pause animation. The opacity control has not been implemented yet.
+RainWatch 0.1a (`0.1.0-alpha.1`) is implemented. It displays a responsive MapLibre map with browser geolocation, selectable historical RainViewer radar frames, looping Play/Pause animation, and adjustable radar opacity.
 
 ## Prerequisites
 
@@ -81,10 +81,12 @@ No backend server, database, authentication system, or API key is required for v
 - Location accuracy depends on the browser, device, network, and operating-system location services.
 - The timeline is limited to the historical frames currently returned by RainViewer, typically approximately two hours.
 - Playback advances every 800 milliseconds and loops from the newest frame to the oldest.
-- Radar opacity is temporarily fixed at 68 percent.
-- The opacity control remains to be implemented.
+- Radar opacity defaults to 70 percent and can be adjusted from fully transparent to fully opaque.
 - RainViewer data availability and retention determine which historical frames can be shown.
+- Map and radar imagery require internet access even though the application has no backend.
+- Browser geolocation normally requires localhost or HTTPS and still needs a manual permission-granted acceptance check.
+- Vite reports a bundle-size advisory because MapLibre and its worker are substantial browser dependencies.
 
-## Planned implementation order
+## Next milestone
 
-1. Opacity control and responsive cleanup
+Run the complete manual acceptance checklist in a normal browser, including granting location permission and confirming the marker and return-to-location action. After 0.1a is accepted, the logical next product milestone is optional PWA installation support without expanding the radar feature scope.

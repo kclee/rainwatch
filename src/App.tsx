@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
-import { RADAR_PLAYBACK_INTERVAL_MS } from './config/radar'
+import {
+  DEFAULT_RADAR_OPACITY,
+  RADAR_PLAYBACK_INTERVAL_MS,
+} from './config/radar'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useRadarFrames } from './hooks/useRadarFrames'
 
@@ -17,6 +20,7 @@ function App() {
   const radar = useRadarFrames()
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [radarOpacity, setRadarOpacity] = useState(DEFAULT_RADAR_OPACITY)
   const isRequesting = status === 'requesting'
   const buttonLabel = location ? 'Return to my location' : 'Use my location'
   const selectedFrameIndex =
@@ -63,16 +67,25 @@ function App() {
           >
             {isRequesting ? 'Finding location…' : buttonLabel}
           </button>
-          <p className="location-status" aria-live="polite">
+          <p
+            className={`location-status${status === 'idle' ? ' location-status--idle' : ''}`}
+            aria-live="polite"
+          >
             {message ?? 'RainWatch does not store your location.'}
           </p>
         </div>
       </header>
-      <WeatherMap radarFrame={selectedFrame} userLocation={location} />
+      <WeatherMap
+        radarFrame={selectedFrame}
+        radarOpacity={radarOpacity}
+        userLocation={location}
+      />
       <Timeline
         frames={radar.frames}
         isPlaying={isPlaying}
+        radarOpacity={radarOpacity}
         selectedIndex={selectedFrameIndex}
+        onChangeOpacity={setRadarOpacity}
         onSelectFrame={setCurrentFrameIndex}
         onTogglePlayback={() => setIsPlaying((playing) => !playing)}
       />

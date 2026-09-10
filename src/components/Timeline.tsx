@@ -10,7 +10,9 @@ const frameTimeFormatter = new Intl.DateTimeFormat(undefined, {
 interface TimelineProps {
   frames: RadarFrame[]
   isPlaying: boolean
+  radarOpacity: number
   selectedIndex: number
+  onChangeOpacity: (opacity: number) => void
   onSelectFrame: (index: number) => void
   onTogglePlayback: () => void
 }
@@ -18,7 +20,9 @@ interface TimelineProps {
 export function Timeline({
   frames,
   isPlaying,
+  radarOpacity,
   selectedIndex,
+  onChangeOpacity,
   onSelectFrame,
   onTogglePlayback,
 }: TimelineProps) {
@@ -29,6 +33,7 @@ export function Timeline({
 
   const selectedDate = new Date(selectedFrame.timestampSeconds * 1000)
   const selectedTime = frameTimeFormatter.format(selectedDate)
+  const opacityPercent = Math.round(radarOpacity * 100)
 
   return (
     <section className="timeline" aria-label="Historical radar timeline">
@@ -76,6 +81,21 @@ export function Timeline({
       >
         Next
       </button>
+      <div className="opacity-control">
+        <label htmlFor="radar-opacity">
+          Radar opacity <output htmlFor="radar-opacity">{opacityPercent}%</output>
+        </label>
+        <input
+          id="radar-opacity"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={radarOpacity}
+          aria-valuetext={`${opacityPercent}%`}
+          onChange={(event) => onChangeOpacity(Number(event.target.value))}
+        />
+      </div>
     </section>
   )
 }
