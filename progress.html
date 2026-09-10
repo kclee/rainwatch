@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">First radar frame complete</span>
+      <span class="status">Radar timeline complete</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Historical radar timeline.</strong> Let the user select any available past frame and show its human-readable local time while updating the radar layer immediately.</p>
+      <p><strong>Radar playback.</strong> Add play and pause controls that automatically advance through the available historical frames and loop cleanly from the newest frame to the oldest.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -83,6 +83,8 @@
           <li class="done">Denied, unavailable, and timeout messages</li>
           <li class="done">RainViewer provider abstraction</li>
           <li class="done">Newest historical radar frame</li>
+          <li class="done">Historical frame slider and timestamps</li>
+          <li class="done">Previous and next frame controls</li>
           <li class="done">Radar attribution and failure states</li>
           <li class="done">Build, lint, and browser checks</li>
         </ul>
@@ -91,7 +93,6 @@
       <article class="card">
         <h2>Remaining for 0.1a</h2>
         <ol>
-          <li class="pending">Historical frame timeline</li>
           <li class="pending">Play and pause controls</li>
           <li class="pending">Radar opacity control</li>
           <li class="pending">Responsive and error-state cleanup</li>
@@ -122,6 +123,8 @@
           <li>Automated verification did not grant or transmit a real location.</li>
           <li>Live RainViewer metadata returned 13 historical frames; the newest frame rendered with its timestamp and attribution.</li>
           <li>The radar status remained compact and the page had no horizontal overflow at phone width.</li>
+          <li>Previous, Next, Home, and End navigation selected the expected historical frames.</li>
+          <li>At phone width, timeline buttons remained 44 pixels tall and the slider used the full available width.</li>
         </ul>
       </article>
     </section>

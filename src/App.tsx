@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import './App.css'
+import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useRadarFrames } from './hooks/useRadarFrames'
@@ -12,8 +14,13 @@ const radarTimeFormatter = new Intl.DateTimeFormat(undefined, {
 function App() {
   const { location, message, requestLocation, status } = useGeolocation()
   const radar = useRadarFrames()
+  const [currentFrameIndex, setCurrentFrameIndex] = useState<number | null>(null)
   const isRequesting = status === 'requesting'
   const buttonLabel = location ? 'Return to my location' : 'Use my location'
+  const selectedFrameIndex =
+    currentFrameIndex ?? Math.max(radar.frames.length - 1, 0)
+  const selectedFrame =
+    radar.frames[selectedFrameIndex] ?? radar.latestFrame
 
   return (
     <main className="app-shell">
@@ -27,8 +34,8 @@ function App() {
             className={`radar-status radar-status--${radar.status}`}
             aria-live="polite"
           >
-            {radar.latestFrame
-              ? `Radar: ${radarTimeFormatter.format(radar.latestFrame.timestampSeconds * 1000)}`
+            {selectedFrame
+              ? `Radar: ${radarTimeFormatter.format(selectedFrame.timestampSeconds * 1000)}`
               : radar.message}
           </p>
           <button
@@ -44,7 +51,12 @@ function App() {
           </p>
         </div>
       </header>
-      <WeatherMap radarFrame={radar.latestFrame} userLocation={location} />
+      <WeatherMap radarFrame={selectedFrame} userLocation={location} />
+      <Timeline
+        frames={radar.frames}
+        selectedIndex={selectedFrameIndex}
+        onSelectFrame={setCurrentFrameIndex}
+      />
     </main>
   )
 }

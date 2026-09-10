@@ -1,7 +1,7 @@
 .app-shell {
   min-height: 100svh;
   display: grid;
-  grid-template-rows: auto minmax(28rem, 1fr);
+  grid-template-rows: auto minmax(28rem, 1fr) auto;
   padding: clamp(0.75rem, 2vw, 1.5rem);
   gap: 0.75rem;
 }
@@ -132,9 +132,86 @@ h1 {
   height: 2.75rem;
 }
 
+.timeline {
+  display: grid;
+  grid-template-columns: auto minmax(12rem, 1fr) minmax(9rem, auto) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.timeline-button {
+  min-width: 5.5rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  border-radius: 0.7rem;
+  color: #e0f2fe;
+  background: #0c4a6e;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.timeline-button:hover:not(:disabled) {
+  background: #075985;
+}
+
+.timeline-button:focus-visible,
+.timeline input:focus-visible {
+  outline: 3px solid #7dd3fc;
+  outline-offset: 2px;
+}
+
+.timeline-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.timeline-track {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.timeline-track label {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.timeline-track input {
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  accent-color: #38bdf8;
+  cursor: pointer;
+}
+
+.timeline-time {
+  display: grid;
+  min-width: 9rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.timeline-time time {
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.timeline-time span {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+
 @media (max-width: 40rem) {
   .app-shell {
-    grid-template-rows: auto minmax(24rem, 1fr);
+    grid-template-rows: auto minmax(24rem, 1fr) auto;
     padding: 0;
     gap: 0;
   }
@@ -164,5 +241,29 @@ h1 {
     min-height: 24rem;
     border: 0;
     border-radius: 0;
+  }
+
+  .timeline {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.5rem;
+    padding: 0.65rem;
+    border-width: 1px 0 0;
+    border-radius: 0;
+  }
+
+  .timeline-track {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .timeline-time {
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .timeline-button {
+    min-width: 5.25rem;
+    grid-row: 2;
   }
 }

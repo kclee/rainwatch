@@ -7,6 +7,7 @@ import {
   Marker,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import type { RasterTileSource } from 'maplibre-gl'
 import { mapConfig } from '../config/map'
 import type { RadarFrame, UserLocation } from '../types/weather'
 
@@ -87,14 +88,15 @@ export function WeatherMap({ radarFrame, userLocation }: WeatherMapProps) {
       return
     }
 
-    if (map.getLayer(RADAR_LAYER_ID)) {
-      map.removeLayer(RADAR_LAYER_ID)
-    }
-    if (map.getSource(RADAR_SOURCE_ID)) {
-      map.removeSource(RADAR_SOURCE_ID)
+    setRadarTileError(null)
+    const existingSource = map.getSource(RADAR_SOURCE_ID) as
+      | RasterTileSource
+      | undefined
+    if (existingSource) {
+      existingSource.setTiles([radarFrame.tileUrl])
+      return
     }
 
-    setRadarTileError(null)
     map.addSource(RADAR_SOURCE_ID, {
       type: 'raster',
       tiles: [radarFrame.tileUrl],
