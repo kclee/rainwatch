@@ -97,13 +97,13 @@
           <li class="done">Generated 192, 512, and Apple touch icons</li>
           <li class="done">App-shell-only service worker cache</li>
           <li class="done">Live map and radar requests remain network-only</li>
+          <li class="done">GitHub Pages production deployment verified</li>
         </ul>
       </article>
 
       <article class="card">
         <h2>Remaining acceptance</h2>
         <ol>
-          <li class="pending">First GitHub Pages deployment confirmation</li>
           <li class="pending">iPhone or iPad Home Screen install check</li>
           <li class="pending">Manual real-location permission check</li>
         </ol>
@@ -130,6 +130,9 @@
           <li>The production build emitted a manifest, service worker, registration script, Workbox runtime, and all application assets.</li>
           <li>Manifest URLs, document assets, and JavaScript/CSS use the production <code>/rainwatch/</code> path.</li>
           <li>RainViewer metadata, radar tiles, and OpenFreeMap tiles are configured as network-only service-worker routes.</li>
+          <li>The public GitHub Pages URL returned HTTP 200 for the app, manifest, service worker, and all required icons.</li>
+          <li>The deployed app rendered the map and 13 live radar frames; playback, Pause, and opacity controls worked.</li>
+          <li>At 390 × 844, the deployed app had no horizontal overflow and RainWatch action buttons remained 44 pixels tall.</li>
           <li>The interactive basemap rendered locally with no application console errors.</li>
           <li>Zoom controls, scale, and provider/data attribution were visible.</li>
           <li>The OpenFreeMap style endpoint returned HTTP 200.</li>
