@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is being built incrementally as a static client-side web app. Version 0.1a will provide an interactive map, browser geolocation, historical RainViewer radar frames, timeline playback, and radar opacity controls.
+The application is built incrementally as a static client-side web app. Version 0.1b adds GitHub Pages deployment and installable Progressive Web App support to the completed 0.1a radar viewer.
 
 ## Built through human-AI collaboration
 
@@ -17,7 +17,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.1a (`0.1.0-alpha.1`) is implemented. It displays a responsive MapLibre map with browser geolocation, selectable historical RainViewer radar frames, looping Play/Pause animation, and adjustable radar opacity.
+RainWatch 0.1b (`0.1.0-beta.1`) is implemented. It displays a responsive MapLibre map with browser geolocation, selectable historical RainViewer radar frames, looping Play/Pause animation, and adjustable radar opacity. The app is packaged as an installable PWA and deploys to GitHub Pages.
 
 ## Prerequisites
 
@@ -51,11 +51,37 @@ Preview the production build locally:
 npm run preview
 ```
 
+The production preview uses the same repository subpath as GitHub Pages. Open `http://localhost:4173/rainwatch/`, not the server root.
+
 Run the linter:
 
 ```powershell
 npm run lint
 ```
+
+Regenerate committed PWA icons after changing the source SVG:
+
+```powershell
+npm run generate:icons
+```
+
+## GitHub Pages deployment
+
+Pushing `main` runs `.github/workflows/deploy-pages.yml`. It installs the locked dependencies, builds RainWatch with the `/rainwatch/` base path, uploads the static artifact, and deploys it through GitHub Pages.
+
+For the first deployment, open the repository's **Settings → Pages** and select **GitHub Actions** under **Build and deployment → Source** if it is not already selected. The expected public URL is:
+
+<https://kclee.github.io/rainwatch/>
+
+The base path is derived from the actual repository/package name rather than duplicated in source paths. Local development remains available at `/`.
+
+## Install on iPhone or iPad
+
+1. Open the deployed HTTPS URL in Safari.
+2. Tap **Share**.
+3. Choose **Add to Home Screen**, then **Add**.
+
+RainWatch opens in a standalone window from the Home Screen. The application shell can reopen after it has loaded successfully once, but fresh map tiles, radar frames, radar metadata, and geolocation behavior still require the browser and network services to be available.
 
 ## Architecture
 
@@ -63,6 +89,7 @@ RainWatch uses:
 
 - React and TypeScript for the interface
 - Vite for local development and production builds
+- `vite-plugin-pwa` and Workbox for the manifest, service worker, and app-shell precache
 - MapLibre GL JS for the interactive map
 - The browser Geolocation API for the user's position
 - RainViewer as the first radar-data provider
@@ -73,7 +100,7 @@ The RainViewer integration is implemented in `src/services/radar/RainViewerRadar
 
 The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
 
-No backend server, database, authentication system, or API key is required for version 0.1a.
+No backend server, database, authentication system, or API key is required for version 0.1b.
 
 ## Known limitations
 
@@ -84,9 +111,11 @@ No backend server, database, authentication system, or API key is required for v
 - Radar opacity defaults to 70 percent and can be adjusted from fully transparent to fully opaque.
 - RainViewer data availability and retention determine which historical frames can be shown.
 - Map and radar imagery require internet access even though the application has no backend.
+- Offline support is deliberately limited to the application shell. Live RainViewer metadata, radar imagery, OpenFreeMap tiles, and geolocation are not cached by RainWatch.
+- iOS does not show a universal automatic install prompt; installation uses Safari's **Add to Home Screen** action.
 - Browser geolocation normally requires localhost or HTTPS and still needs a manual permission-granted acceptance check.
 - Vite reports a bundle-size advisory because MapLibre and its worker are substantial browser dependencies.
 
 ## Next milestone
 
-Run the complete manual acceptance checklist in a normal browser, including granting location permission and confirming the marker and return-to-location action. After 0.1a is accepted, the logical next product milestone is optional PWA installation support without expanding the radar feature scope.
+Confirm the GitHub Pages deployment, then install the live site on an iPhone or iPad and run the manual location-permission check in that installed app. Future product work can remain separate from this deployment milestone.

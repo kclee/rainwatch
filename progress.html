@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.1a implemented</span>
+      <span class="status">Version 0.1b implemented</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Manual acceptance pass.</strong> Run RainWatch in a normal browser, grant location permission, and confirm that the marker, return-to-location action, map, radar timeline, playback, and opacity control work together.</p>
+      <p><strong>Live installation check.</strong> Confirm the GitHub Pages deployment, add the HTTPS site to an iPhone or iPad Home Screen, and complete the real-location permission check in the installed app.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.1a is intentionally limited to a static radar viewer. It has no backend, database, accounts, forecast AI, or native application.</p>
+        <p>Version 0.1b keeps the focused static radar scope while adding GitHub Pages delivery and installable PWA packaging. It has no backend, database, accounts, forecast AI, or native application.</p>
       </article>
 
       <article class="card">
@@ -91,14 +91,21 @@
           <li class="done">Mobile location-error visibility</li>
           <li class="done">Radar attribution and failure states</li>
           <li class="done">Build, lint, and browser checks</li>
+          <li class="done">Repository-derived GitHub Pages base path</li>
+          <li class="done">Official GitHub Pages Actions workflow</li>
+          <li class="done">Web app manifest and standalone display</li>
+          <li class="done">Generated 192, 512, and Apple touch icons</li>
+          <li class="done">App-shell-only service worker cache</li>
+          <li class="done">Live map and radar requests remain network-only</li>
         </ul>
       </article>
 
       <article class="card">
-        <h2>Remaining for 0.1a</h2>
+        <h2>Remaining acceptance</h2>
         <ol>
+          <li class="pending">First GitHub Pages deployment confirmation</li>
+          <li class="pending">iPhone or iPad Home Screen install check</li>
           <li class="pending">Manual real-location permission check</li>
-          <li class="pending">User acceptance of version 0.1a</li>
         </ol>
       </article>
 
@@ -110,7 +117,8 @@
           <li><strong>Basemap:</strong> configurable OpenFreeMap development style</li>
           <li><strong>Radar:</strong> RainViewer historical frames behind a provider interface</li>
           <li><strong>Location:</strong> browser Geolocation API with explicit user action</li>
-          <li><strong>Deployment shape:</strong> static client-side files</li>
+          <li><strong>PWA:</strong> Vite PWA plugin and Workbox app-shell precache</li>
+          <li><strong>Deployment:</strong> static GitHub Pages site at <code>/rainwatch/</code></li>
         </ul>
       </article>
 
@@ -119,6 +127,9 @@
         <ul>
           <li><code>npm run build</code> passed.</li>
           <li><code>npm run lint</code> passed.</li>
+          <li>The production build emitted a manifest, service worker, registration script, Workbox runtime, and all application assets.</li>
+          <li>Manifest URLs, document assets, and JavaScript/CSS use the production <code>/rainwatch/</code> path.</li>
+          <li>RainViewer metadata, radar tiles, and OpenFreeMap tiles are configured as network-only service-worker routes.</li>
           <li>The interactive basemap rendered locally with no application console errors.</li>
           <li>Zoom controls, scale, and provider/data attribution were visible.</li>
           <li>The OpenFreeMap style endpoint returned HTTP 200.</li>
