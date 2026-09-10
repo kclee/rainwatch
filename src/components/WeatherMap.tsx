@@ -8,18 +8,23 @@ import {
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { mapConfig } from '../config/map'
-import type { UserLocation } from '../types/weather'
+import type { RadarFrame, UserLocation } from '../types/weather'
+
+const RADAR_SOURCE_ID = 'rainwatch-radar'
+const RADAR_LAYER_ID = 'rainwatch-radar-layer'
 
 interface WeatherMapProps {
+  radarFrame: RadarFrame | null
   userLocation: UserLocation | null
 }
 
-export function WeatherMap({ userLocation }: WeatherMapProps) {
+export function WeatherMap({ radarFrame, userLocation }: WeatherMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
   const locationMarkerRef = useRef<Marker | null>(null)
   const [isMapReady, setIsMapReady] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
+  const [radarTileError, setRadarTileError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -55,6 +60,13 @@ export function WeatherMap({ userLocation }: WeatherMapProps) {
     resizeObserver.observe(containerRef.current)
 
     map.on('error', (event) => {
+      if ('sourceId' in event && event.sourceId === RADAR_SOURCE_ID) {
+        setRadarTileError(
+          'Radar tiles could not be loaded. The basemap is still available.',
+        )
+        return
+      }
+
       setMapError(event.error?.message ?? 'The basemap could not be loaded.')
     })
 
@@ -68,6 +80,46 @@ export function WeatherMap({ userLocation }: WeatherMapProps) {
       mapRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isMapReady || !radarFrame) {
+      return
+    }
+
+    if (map.getLayer(RADAR_LAYER_ID)) {
+      map.removeLayer(RADAR_LAYER_ID)
+    }
+    if (map.getSource(RADAR_SOURCE_ID)) {
+      map.removeSource(RADAR_SOURCE_ID)
+    }
+
+    setRadarTileError(null)
+    map.addSource(RADAR_SOURCE_ID, {
+      type: 'raster',
+      tiles: [radarFrame.tileUrl],
+      tileSize: 256,
+      maxzoom: 7,
+      attribution: radarFrame.attribution,
+    })
+
+    const firstSymbolLayer = map
+      .getStyle()
+      .layers?.find((layer) => layer.type === 'symbol')?.id
+
+    map.addLayer(
+      {
+        id: RADAR_LAYER_ID,
+        type: 'raster',
+        source: RADAR_SOURCE_ID,
+        paint: {
+          'raster-opacity': 0.68,
+          'raster-fade-duration': 0,
+        },
+      },
+      firstSymbolLayer,
+    )
+  }, [isMapReady, radarFrame])
 
   useEffect(() => {
     const map = mapRef.current
@@ -109,6 +161,11 @@ export function WeatherMap({ userLocation }: WeatherMapProps) {
       {mapError && (
         <div className="map-message" role="status">
           The map is temporarily unavailable. {mapError}
+        </div>
+      )}
+      {radarTileError && !mapError && (
+        <div className="map-message" role="status">
+          {radarTileError}
         </div>
       )}
     </section>

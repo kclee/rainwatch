@@ -17,7 +17,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive, interactive MapLibre map with zoom, pan, scale, attribution, browser geolocation, a user-position marker, and a return-to-location control. Radar features have not been implemented yet.
+The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive MapLibre map with browser geolocation and the newest available historical RainViewer radar frame. The radar timeline, playback, and opacity control have not been implemented yet.
 
 ## Prerequisites
 
@@ -65,9 +65,11 @@ RainWatch uses:
 - Vite for local development and production builds
 - MapLibre GL JS for the interactive map
 - The browser Geolocation API for the user's position
-- RainViewer as the first radar-data provider (planned)
+- RainViewer as the first radar-data provider
 
 External radar integration will live behind a small provider abstraction under `src/services/radar/`. UI components will consume provider-neutral radar frame data instead of constructing RainViewer URLs directly.
+
+The RainViewer integration is implemented in `src/services/radar/RainViewerRadarProvider.ts`. It reads only the API's historical `radar.past` frames, validates the response, and produces provider-neutral tile templates for the map.
 
 The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
 
@@ -77,12 +79,13 @@ No backend server, database, authentication system, or API key is required for v
 
 - The map starts at a general continental United States view until the user explicitly requests location access.
 - Location accuracy depends on the browser, device, network, and operating-system location services.
-- The radar layer, timeline, playback, and opacity control remain to be implemented.
+- Only the newest available historical radar frame is displayed.
+- Radar opacity is temporarily fixed at 68 percent.
+- The timeline, playback, and opacity control remain to be implemented.
 - RainViewer data availability and retention determine which historical frames can be shown.
 
 ## Planned implementation order
 
-1. One RainViewer radar frame
-2. Radar timeline
-3. Playback controls
-4. Opacity control and responsive cleanup
+1. Radar timeline
+2. Playback controls
+3. Opacity control and responsive cleanup

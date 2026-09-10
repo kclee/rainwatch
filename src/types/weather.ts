@@ -11,3 +11,12 @@ export type GeolocationStatus =
   | 'denied'
   | 'unavailable'
   | 'error'
+
+export interface RadarFrame {
+  id: string
+  timestampSeconds: number
+  tileUrl: string
+  attribution: string
+}
+
+export type RadarStatus = 'loading' | 'ready' | 'empty' | 'error'
