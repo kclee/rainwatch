@@ -4,13 +4,20 @@ import {
   Map,
   NavigationControl,
   ScaleControl,
+  Marker,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { mapConfig } from '../config/map'
+import type { UserLocation } from '../types/weather'
 
-export function WeatherMap() {
+interface WeatherMapProps {
+  userLocation: UserLocation | null
+}
+
+export function WeatherMap({ userLocation }: WeatherMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
+  const locationMarkerRef = useRef<Marker | null>(null)
   const [isMapReady, setIsMapReady] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
 
@@ -55,10 +62,41 @@ export function WeatherMap() {
 
     return () => {
       resizeObserver.disconnect()
+      locationMarkerRef.current?.remove()
+      locationMarkerRef.current = null
       map.remove()
       mapRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !userLocation) {
+      return
+    }
+
+    const coordinates: [number, number] = [
+      userLocation.longitude,
+      userLocation.latitude,
+    ]
+
+    if (!locationMarkerRef.current) {
+      const marker = new Marker({ color: '#0284c7' })
+        .setLngLat(coordinates)
+        .addTo(map)
+      marker.getElement().setAttribute('aria-label', 'Your current location')
+      marker.getElement().setAttribute('role', 'img')
+      locationMarkerRef.current = marker
+    } else {
+      locationMarkerRef.current.setLngLat(coordinates)
+    }
+
+    map.flyTo({
+      center: coordinates,
+      zoom: Math.max(map.getZoom(), 11),
+      essential: true,
+    })
+  }, [userLocation])
 
   return (
     <section className="map-panel" aria-label="Interactive weather map">

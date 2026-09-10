@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Interactive map complete</span>
+      <span class="status">Geolocation complete</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Browser geolocation.</strong> Center the map near the user, show a clear position marker, and provide a return-to-location control while preserving a friendly fallback when permission is denied or unavailable.</p>
+      <p><strong>One RainViewer radar frame.</strong> Fetch current radar metadata through a small provider abstraction and render one historical radar tile layer above the basemap with graceful metadata and tile-loading failures.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -78,6 +78,9 @@
           <li class="done">Responsive MapLibre map</li>
           <li class="done">Zoom, pan, scale, and attribution</li>
           <li class="done">Replaceable basemap configuration</li>
+          <li class="done">Browser geolocation and position marker</li>
+          <li class="done">Return-to-location control</li>
+          <li class="done">Denied, unavailable, and timeout messages</li>
           <li class="done">Build, lint, and browser checks</li>
         </ul>
       </article>
@@ -85,7 +88,6 @@
       <article class="card">
         <h2>Remaining for 0.1a</h2>
         <ol>
-          <li class="pending">Browser geolocation and position marker</li>
           <li class="pending">One RainViewer radar frame</li>
           <li class="pending">Historical frame timeline</li>
           <li class="pending">Play and pause controls</li>
@@ -101,7 +103,7 @@
           <li><strong>Map:</strong> MapLibre GL JS 6.9.0</li>
           <li><strong>Basemap:</strong> configurable OpenFreeMap development style</li>
           <li><strong>Radar:</strong> RainViewer behind a provider interface (planned)</li>
-          <li><strong>Location:</strong> browser Geolocation API (planned)</li>
+          <li><strong>Location:</strong> browser Geolocation API with explicit user action</li>
           <li><strong>Deployment shape:</strong> static client-side files</li>
         </ul>
       </article>
@@ -114,6 +116,8 @@
           <li>The interactive basemap rendered locally with no application console errors.</li>
           <li>Zoom controls, scale, and provider/data attribution were visible.</li>
           <li>The OpenFreeMap style endpoint returned HTTP 200.</li>
+          <li>The location control remained touch-sized and the page had no horizontal overflow at 390 × 844.</li>
+          <li>Automated verification did not grant or transmit a real location.</li>
         </ul>
       </article>
     </section>

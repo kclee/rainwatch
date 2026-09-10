@@ -17,7 +17,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive, interactive MapLibre map with zoom, pan, scale, and attribution controls. Radar and geolocation features have not been implemented yet.
+The React, TypeScript, and Vite foundation is complete. RainWatch now displays a responsive, interactive MapLibre map with zoom, pan, scale, attribution, browser geolocation, a user-position marker, and a return-to-location control. Radar features have not been implemented yet.
 
 ## Prerequisites
 
@@ -64,7 +64,7 @@ RainWatch uses:
 - React and TypeScript for the interface
 - Vite for local development and production builds
 - MapLibre GL JS for the interactive map
-- The browser Geolocation API for the user's position (planned)
+- The browser Geolocation API for the user's position
 - RainViewer as the first radar-data provider (planned)
 
 External radar integration will live behind a small provider abstraction under `src/services/radar/`. UI components will consume provider-neutral radar frame data instead of constructing RainViewer URLs directly.
@@ -75,14 +75,14 @@ No backend server, database, authentication system, or API key is required for v
 
 ## Known limitations
 
-- The current map starts at a general continental United States view.
-- Location handling, the radar layer, timeline, playback, and opacity control remain to be implemented.
+- The map starts at a general continental United States view until the user explicitly requests location access.
+- Location accuracy depends on the browser, device, network, and operating-system location services.
+- The radar layer, timeline, playback, and opacity control remain to be implemented.
 - RainViewer data availability and retention determine which historical frames can be shown.
 
 ## Planned implementation order
 
-1. Browser geolocation
-2. One RainViewer radar frame
-3. Radar timeline
-4. Playback controls
-5. Opacity control and responsive cleanup
+1. One RainViewer radar frame
+2. Radar timeline
+3. Playback controls
+4. Opacity control and responsive cleanup
