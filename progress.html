@@ -98,6 +98,7 @@
           <li class="done">App-shell-only service worker cache</li>
           <li class="done">Live map and radar requests remain network-only</li>
           <li class="done">GitHub Pages production deployment verified</li>
+          <li class="done">Production MapLibre labels and boundaries fixed</li>
         </ul>
       </article>
 
@@ -132,6 +133,7 @@
           <li>RainViewer metadata, radar tiles, and OpenFreeMap tiles are configured as network-only service-worker routes.</li>
           <li>The public GitHub Pages URL returned HTTP 200 for the app, manifest, service worker, and all required icons.</li>
           <li>The deployed app rendered the map and 13 live radar frames; playback, Pause, and opacity controls worked.</li>
+          <li>A production-only missing-label issue was reproduced and fixed by bundling MapLibre's module worker through Vite.</li>
           <li>At 390 × 844, the deployed app had no horizontal overflow and RainWatch action buttons remained 44 pixels tall.</li>
           <li>The interactive basemap rendered locally with no application console errors.</li>
           <li>Zoom controls, scale, and provider/data attribution were visible.</li>

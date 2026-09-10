@@ -5,8 +5,10 @@ import {
   NavigationControl,
   ScaleControl,
   Marker,
+  setWorkerUrl,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import mapLibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import type { RasterTileSource } from 'maplibre-gl'
 import { mapConfig } from '../config/map'
 import { DEFAULT_RADAR_OPACITY } from '../config/radar'
@@ -14,6 +16,8 @@ import type { RadarFrame, UserLocation } from '../types/weather'
 
 const RADAR_SOURCE_ID = 'rainwatch-radar'
 const RADAR_LAYER_ID = 'rainwatch-radar-layer'
+
+setWorkerUrl(mapLibreWorkerUrl)
 
 interface WeatherMapProps {
   radarFrame: RadarFrame | null

@@ -100,6 +100,8 @@ The RainViewer integration is implemented in `src/services/radar/RainViewerRadar
 
 The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
 
+MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
+
 No backend server, database, authentication system, or API key is required for version 0.1b.
 
 ## Known limitations
