@@ -133,4 +133,4 @@ No backend server, database, authentication system, or API key is required for v
 
 ## Next milestone
 
-Deploy and verify version 0.2b on GitHub Pages, then pause for product review before defining the next bounded milestone.
+Version 0.2b is deployed on GitHub Pages. Pause for product review before defining the next bounded milestone.
