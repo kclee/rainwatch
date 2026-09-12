@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2a implemented</span>
+      <span class="status">Version 0.2b implemented</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Product review.</strong> Version 0.2a is live on GitHub Pages. Pause before defining a separate 0.2b milestone.</p>
+      <p><strong>Deployment verification.</strong> Publish the tested 0.2b satellite modes to GitHub Pages, verify the live service-worker update, then pause for product review.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.2a keeps the focused static radar scope while making intensity, frame age, metadata freshness, and refresh failures easier to understand. It has no backend, database, accounts, forecast AI, or native application.</p>
+        <p>Version 0.2b keeps the focused static architecture while adding one latest NOAA GOES GeoColor image through Radar, Cloud, and Both modes. It has no backend, database, accounts, forecast AI, or native application.</p>
       </article>
 
       <article class="card">
@@ -96,6 +96,14 @@
           <li class="done">Manual refresh that preserves the selected frame</li>
           <li class="done">30-minute delayed-data warning</li>
           <li class="done">Last-available and unavailable radar handling</li>
+          <li class="done">NOAA/NESDIS merged GOES GeoColor provider</li>
+          <li class="done">Radar, Cloud, and Both map modes</li>
+          <li class="done">Viewport-sized Web Mercator satellite export</li>
+          <li class="done">Cloud opacity and independent timestamp</li>
+          <li class="done">35-minute satellite freshness threshold</li>
+          <li class="done">Independent provider failure handling</li>
+          <li class="done">Lazy cloud loading and move-end refresh</li>
+          <li class="done">NOAA imagery remains network-only in the PWA</li>
           <li class="done">Build, lint, and browser checks</li>
           <li class="done">Repository-derived GitHub Pages base path</li>
           <li class="done">Official GitHub Pages Actions workflow</li>
@@ -140,6 +148,12 @@
           <li>The provider-matched Universal Blue legend rendered on desktop and mobile without covering map attribution.</li>
           <li>At 390 × 844, the 0.2a app had no horizontal overflow and all primary controls remained available.</li>
           <li>Browser verification found no application console errors or warnings.</li>
+          <li>NOAA metadata and image requests returned HTTP 200 with CORS access for the GitHub Pages origin.</li>
+          <li>Cloud and Both modes rendered the latest GeoColor imagery aligned with the MapLibre basemap across zoom changes.</li>
+          <li>Radar and cloud timestamps remained visibly separate; refresh preserved radar selection and playback.</li>
+          <li>Cloud opacity worked from 0 to 100 percent without downloading a replacement image.</li>
+          <li>Provider checks covered success, empty metadata, HTTP failure, request-size caps, Web Mercator parameters, and the 35-minute stale boundary.</li>
+          <li>At 390 × 844, all three modes remained usable with no horizontal overflow.</li>
           <li>The 0.2a GitHub Pages workflow completed successfully; after the service-worker update and one reload, the public site displayed the new legend, refresh control, and relative frame age.</li>
           <li>The production build emitted a manifest, service worker, registration script, Workbox runtime, and all application assets.</li>
           <li>Manifest URLs, document assets, and JavaScript/CSS use the production <code>/rainwatch/</code> path.</li>
@@ -166,7 +180,7 @@
     </section>
 
     <footer>
-      Detailed implementation evidence: <a href="docs/journal/2026-09-12.md">docs/journal/2026-09-12.md</a>. Updated 2026-09-12.
+      Detailed implementation evidence: <a href="docs/journal/2026-09-12-0.2b.md">docs/journal/2026-09-12-0.2b.md</a>. Updated 2026-09-12.
     </footer>
   </main>
 </body>

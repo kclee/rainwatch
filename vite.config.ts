@@ -28,7 +28,7 @@ export default defineConfig(({ command, isPreview }) => {
           id: './',
           name: 'RainWatch',
           short_name: 'RainWatch',
-          description: 'A focused, animated weather radar viewer.',
+          description: 'A focused weather radar and satellite cloud viewer.',
           start_url: './',
           scope: './',
           display: 'standalone',

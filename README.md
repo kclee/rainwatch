@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is built incrementally as a static client-side web app. Version 0.2a adds clearer radar intensity and data-age context to the deployed, installable 0.1 radar viewer.
+The application is built incrementally as a static client-side web app. Version 0.2b adds latest NOAA GOES cloud/satellite imagery and Radar, Cloud, and Both map modes to the deployed, installable radar viewer.
 
 ## Built through human-AI collaboration
 
@@ -13,12 +13,13 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-12-0.2b.md`](docs/journal/2026-09-12-0.2b.md) records the satellite milestone and its verification.
 - [`docs/journal/2026-09-12.md`](docs/journal/2026-09-12.md) records the latest implementation details, verification, changed files, and commit subjects.
 - [`docs/journal/2026-09-10.md`](docs/journal/2026-09-10.md) records the 0.1 development history.
 
 ## Current status
 
-RainWatch 0.2a (`0.2.0-alpha.1`) is implemented. In addition to the 0.1 map, geolocation, timeline, playback, opacity, PWA, and deployment features, it shows an accurate RainViewer Universal Blue intensity legend, relative and absolute frame times, separate metadata-refresh freshness, manual refresh, and explicit delayed or unavailable states.
+RainWatch 0.2b (`0.2.0-beta.1`) is implemented. Radar mode preserves the complete 0.2a experience. Cloud mode displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Both mode layers cloud imagery below radar while showing independent timestamps and opacity controls.
 
 ## Prerequisites
 
@@ -82,7 +83,7 @@ The base path is derived from the actual repository/package name rather than dup
 2. Tap **Share**.
 3. Choose **Add to Home Screen**, then **Add**.
 
-RainWatch opens in a standalone window from the Home Screen. The application shell can reopen after it has loaded successfully once, but fresh map tiles, radar frames, radar metadata, and geolocation behavior still require the browser and network services to be available.
+RainWatch opens in a standalone window from the Home Screen. The application shell can reopen after it has loaded successfully once, but fresh map tiles, radar frames, satellite imagery, weather metadata, and geolocation behavior still require the browser and network services to be available.
 
 ## Architecture
 
@@ -94,16 +95,19 @@ RainWatch uses:
 - MapLibre GL JS for the interactive map
 - The browser Geolocation API for the user's position
 - RainViewer as the first radar-data provider
+- NOAA/NESDIS `Most_Recent_MERGEDGC` as the cloud/satellite provider
 
 External radar integration will live behind a small provider abstraction under `src/services/radar/`. UI components will consume provider-neutral radar frame data instead of constructing RainViewer URLs directly.
 
 The RainViewer integration is implemented in `src/services/radar/RainViewerRadarProvider.ts`. It reads only the API's historical `radar.past` frames, validates the response, and produces provider-neutral tile templates for the map.
 
+The NOAA integration is isolated in `src/services/cloud/NoaaGoesCloudProvider.ts`. It reads the latest image record from the official [`Most_Recent_MERGEDGC` ImageServer](https://satellitemaps.nesdis.noaa.gov/arcgis/rest/services/Most_Recent_MERGEDGC/ImageServer), then builds a viewport-sized Web Mercator `exportImage` request for MapLibre. Requests are capped at 1600 × 1200 pixels and 1.5× pixel density and occur only when cloud imagery is visible, refreshed, resized, or the map finishes moving.
+
 The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
 
 MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
 
-No backend server, database, authentication system, or API key is required for version 0.2a.
+No backend server, database, authentication system, or API key is required for version 0.2b.
 
 ## Known limitations
 
@@ -116,12 +120,17 @@ No backend server, database, authentication system, or API key is required for v
 - The intensity legend is a compact visual guide to RainViewer's Universal Blue reflectivity palette; it does not convert colors into exact rainfall rates.
 - Radar is marked delayed when the newest frame is at least 30 minutes old. This threshold represents roughly three missed updates at RainViewer's current typical cadence and may need adjustment if that cadence changes.
 - Manual refresh updates radar metadata. A failed refresh keeps already-loaded frames visible and labels them as the last available data; an empty successful response removes the radar overlay.
+- NOAA GeoColor is satellite imagery rather than an exact cloud-cover percentage. It uses visible-color information by day and infrared/multispectral rendering at night, so its appearance changes after dark.
+- NOAA's latest merged image normally advances about every ten minutes. RainWatch warns when the image timestamp is at least 35 minutes old, allowing for slower scans and ordinary publication delay.
+- Radar and satellite observations have separate timestamps and are not synchronized.
+- Cloud imagery is a single latest image in 0.2b; cloud history and cloud animation are intentionally deferred.
+- The NOAA service extends to approximately 76° north and south; polar areas and views crossing the antimeridian are not a focus of this milestone.
 - Map and radar imagery require internet access even though the application has no backend.
-- Offline support is deliberately limited to the application shell. Live RainViewer metadata, radar imagery, OpenFreeMap tiles, and geolocation are not cached by RainWatch.
+- Offline support is deliberately limited to the application shell. Live NOAA imagery, RainViewer metadata and radar imagery, OpenFreeMap tiles, and geolocation are not cached by RainWatch.
 - iOS does not show a universal automatic install prompt; installation uses Safari's **Add to Home Screen** action.
 - Browser geolocation normally requires localhost or HTTPS and still needs a manual permission-granted acceptance check.
 - Vite reports a bundle-size advisory because MapLibre and its worker are substantial browser dependencies.
 
 ## Next milestone
 
-Version 0.2a is deployed on GitHub Pages. Pause for product review before defining 0.2b.
+Deploy and verify version 0.2b on GitHub Pages, then pause for product review before defining the next bounded milestone.
