@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is built incrementally as a static client-side web app. Version 0.1b adds GitHub Pages deployment and installable Progressive Web App support to the completed 0.1a radar viewer.
+The application is built incrementally as a static client-side web app. Version 0.2a adds clearer radar intensity and data-age context to the deployed, installable 0.1 radar viewer.
 
 ## Built through human-AI collaboration
 
@@ -13,11 +13,12 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
-- [`docs/journal/2026-09-10.md`](docs/journal/2026-09-10.md) records implementation details, verification, changed files, and commit subjects.
+- [`docs/journal/2026-09-12.md`](docs/journal/2026-09-12.md) records the latest implementation details, verification, changed files, and commit subjects.
+- [`docs/journal/2026-09-10.md`](docs/journal/2026-09-10.md) records the 0.1 development history.
 
 ## Current status
 
-RainWatch 0.1b (`0.1.0-beta.1`) is implemented. It displays a responsive MapLibre map with browser geolocation, selectable historical RainViewer radar frames, looping Play/Pause animation, and adjustable radar opacity. The app is packaged as an installable PWA and deploys to GitHub Pages.
+RainWatch 0.2a (`0.2.0-alpha.1`) is implemented. In addition to the 0.1 map, geolocation, timeline, playback, opacity, PWA, and deployment features, it shows an accurate RainViewer Universal Blue intensity legend, relative and absolute frame times, separate metadata-refresh freshness, manual refresh, and explicit delayed or unavailable states.
 
 ## Prerequisites
 
@@ -102,7 +103,7 @@ The development basemap is configured in `src/config/map.ts`. It currently uses 
 
 MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
 
-No backend server, database, authentication system, or API key is required for version 0.1b.
+No backend server, database, authentication system, or API key is required for version 0.2a.
 
 ## Known limitations
 
@@ -112,6 +113,9 @@ No backend server, database, authentication system, or API key is required for v
 - Playback advances every 800 milliseconds and loops from the newest frame to the oldest.
 - Radar opacity defaults to 70 percent and can be adjusted from fully transparent to fully opaque.
 - RainViewer data availability and retention determine which historical frames can be shown.
+- The intensity legend is a compact visual guide to RainViewer's Universal Blue reflectivity palette; it does not convert colors into exact rainfall rates.
+- Radar is marked delayed when the newest frame is at least 30 minutes old. This threshold represents roughly three missed updates at RainViewer's current typical cadence and may need adjustment if that cadence changes.
+- Manual refresh updates radar metadata. A failed refresh keeps already-loaded frames visible and labels them as the last available data; an empty successful response removes the radar overlay.
 - Map and radar imagery require internet access even though the application has no backend.
 - Offline support is deliberately limited to the application shell. Live RainViewer metadata, radar imagery, OpenFreeMap tiles, and geolocation are not cached by RainWatch.
 - iOS does not show a universal automatic install prompt; installation uses Safari's **Add to Home Screen** action.
@@ -120,4 +124,4 @@ No backend server, database, authentication system, or API key is required for v
 
 ## Next milestone
 
-Confirm the GitHub Pages deployment, then install the live site on an iPhone or iPad and run the manual location-permission check in that installed app. Future product work can remain separate from this deployment milestone.
+Verify the 0.2a GitHub Pages deployment and its service-worker update, then pause for product review before defining 0.2b.
