@@ -9,18 +9,37 @@ import {
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import mapLibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import type { RasterTileSource } from 'maplibre-gl'
+import type { ImageSource, RasterTileSource } from 'maplibre-gl'
 import { mapConfig } from '../config/map'
+import { DEFAULT_CLOUD_OPACITY } from '../config/cloud'
 import { DEFAULT_RADAR_OPACITY } from '../config/radar'
-import type { RadarFrame, RadarPalette, UserLocation } from '../types/weather'
+import type {
+  CloudFrame,
+  CloudImageRequest,
+  CloudViewport,
+  MapMode,
+  RadarFrame,
+  RadarPalette,
+  UserLocation,
+} from '../types/weather'
 import { RadarLegend } from './RadarLegend'
 
 const RADAR_SOURCE_ID = 'rainwatch-radar'
 const RADAR_LAYER_ID = 'rainwatch-radar-layer'
+const CLOUD_SOURCE_ID = 'rainwatch-cloud'
+const CLOUD_LAYER_ID = 'rainwatch-cloud-layer'
 
 setWorkerUrl(mapLibreWorkerUrl)
 
 interface WeatherMapProps {
+  buildCloudImageRequest: (
+    frame: CloudFrame,
+    viewport: CloudViewport,
+  ) => CloudImageRequest | null
+  cloudFrame: CloudFrame | null
+  cloudNotice: string | null
+  cloudOpacity: number
+  mapMode: MapMode
   radarFrame: RadarFrame | null
   radarPalette: RadarPalette
   radarNotice: string | null
@@ -29,6 +48,11 @@ interface WeatherMapProps {
 }
 
 export function WeatherMap({
+  buildCloudImageRequest,
+  cloudFrame,
+  cloudNotice,
+  cloudOpacity,
+  mapMode,
   radarFrame,
   radarPalette,
   radarNotice,
@@ -41,6 +65,7 @@ export function WeatherMap({
   const [isMapReady, setIsMapReady] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
   const [radarTileError, setRadarTileError] = useState<string | null>(null)
+  const [cloudImageError, setCloudImageError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -83,12 +108,22 @@ export function WeatherMap({
         return
       }
 
+      if ('sourceId' in event && event.sourceId === CLOUD_SOURCE_ID) {
+        setCloudImageError(
+          'Satellite image could not be loaded. Other map layers remain available.',
+        )
+        return
+      }
+
       setMapError(event.error?.message ?? 'The basemap could not be loaded.')
     })
 
     map.on('sourcedata', (event) => {
       if (event.sourceId === RADAR_SOURCE_ID && event.isSourceLoaded) {
         setRadarTileError(null)
+      }
+      if (event.sourceId === CLOUD_SOURCE_ID && event.isSourceLoaded) {
+        setCloudImageError(null)
       }
     })
 
@@ -109,7 +144,7 @@ export function WeatherMap({
       return
     }
 
-    if (!radarFrame) {
+    if (mapMode === 'cloud' || !radarFrame) {
       if (map.getLayer(RADAR_LAYER_ID)) {
         map.removeLayer(RADAR_LAYER_ID)
       }
@@ -151,7 +186,110 @@ export function WeatherMap({
       },
       firstSymbolLayer,
     )
-  }, [isMapReady, radarFrame])
+  }, [isMapReady, mapMode, radarFrame])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isMapReady) {
+      return
+    }
+
+    if (mapMode === 'radar' || !cloudFrame) {
+      if (map.getLayer(CLOUD_LAYER_ID)) {
+        map.removeLayer(CLOUD_LAYER_ID)
+      }
+      if (map.getSource(CLOUD_SOURCE_ID)) {
+        map.removeSource(CLOUD_SOURCE_ID)
+      }
+      return
+    }
+
+    const updateCloudImage = () => {
+      const bounds = map.getBounds()
+      const container = map.getContainer()
+      const request = buildCloudImageRequest(cloudFrame, {
+        west: bounds.getWest(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        north: bounds.getNorth(),
+        width: container.clientWidth,
+        height: container.clientHeight,
+        pixelRatio: window.devicePixelRatio,
+      })
+
+      if (!request) {
+        if (map.getLayer(CLOUD_LAYER_ID)) {
+          map.removeLayer(CLOUD_LAYER_ID)
+        }
+        if (map.getSource(CLOUD_SOURCE_ID)) {
+          map.removeSource(CLOUD_SOURCE_ID)
+        }
+        return
+      }
+
+      const existingSource = map.getSource(CLOUD_SOURCE_ID) as
+        | ImageSource
+        | undefined
+      if (existingSource) {
+        existingSource.updateImage(request)
+        return
+      }
+
+      map.addSource(CLOUD_SOURCE_ID, {
+        type: 'image',
+        url: request.url,
+        coordinates: request.coordinates,
+      })
+
+      const firstSymbolLayer = map
+        .getStyle()
+        .layers?.find((layer) => layer.type === 'symbol')?.id
+      const beforeLayer = map.getLayer(RADAR_LAYER_ID)
+        ? RADAR_LAYER_ID
+        : firstSymbolLayer
+
+      map.addLayer(
+        {
+          id: CLOUD_LAYER_ID,
+          type: 'raster',
+          source: CLOUD_SOURCE_ID,
+          paint: {
+            'raster-opacity': DEFAULT_CLOUD_OPACITY,
+            'raster-fade-duration': 0,
+          },
+        },
+        beforeLayer,
+      )
+    }
+
+    let updateTimer: number | null = null
+    const scheduleCloudImageUpdate = () => {
+      if (updateTimer !== null) {
+        window.clearTimeout(updateTimer)
+      }
+      updateTimer = window.setTimeout(() => {
+        updateTimer = null
+        updateCloudImage()
+      }, 250)
+    }
+
+    updateCloudImage()
+    map.on('moveend', scheduleCloudImageUpdate)
+    map.on('resize', scheduleCloudImageUpdate)
+
+    return () => {
+      if (updateTimer !== null) {
+        window.clearTimeout(updateTimer)
+      }
+      map.off('moveend', scheduleCloudImageUpdate)
+      map.off('resize', scheduleCloudImageUpdate)
+    }
+  }, [
+    buildCloudImageRequest,
+    cloudFrame,
+    isMapReady,
+    mapMode,
+  ])
 
   useEffect(() => {
     const map = mapRef.current
@@ -161,6 +299,15 @@ export function WeatherMap({
 
     map.setPaintProperty(RADAR_LAYER_ID, 'raster-opacity', radarOpacity)
   }, [isMapReady, radarOpacity])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isMapReady || !map.getLayer(CLOUD_LAYER_ID)) {
+      return
+    }
+
+    map.setPaintProperty(CLOUD_LAYER_ID, 'raster-opacity', cloudOpacity)
+  }, [cloudOpacity, isMapReady])
 
   useEffect(() => {
     const map = mapRef.current
@@ -204,17 +351,28 @@ export function WeatherMap({
           The map is temporarily unavailable. {mapError}
         </div>
       )}
-      {radarTileError && !mapError && (
-        <div className="map-message" role="status">
-          {radarTileError}
+      {!mapError && (
+        <div className="weather-notices">
+          {mapMode !== 'cloud' && (radarTileError || radarNotice) && (
+            <div className="radar-notice" role="status">
+              {radarTileError ?? radarNotice}
+            </div>
+          )}
+          {mapMode !== 'radar' && (cloudImageError || cloudNotice) && (
+            <div className="radar-notice" role="status">
+              {cloudImageError ?? cloudNotice}
+            </div>
+          )}
         </div>
       )}
-      {radarNotice && !mapError && !radarTileError && (
-        <div className="radar-notice" role="status">
-          {radarNotice}
+      {mapMode !== 'cloud' && <RadarLegend palette={radarPalette} />}
+      {mapMode !== 'radar' && cloudFrame && (
+        <div className="cloud-attribution">
+          <a href={cloudFrame.attributionUrl} target="_blank" rel="noreferrer">
+            {cloudFrame.attributionLabel}
+          </a>
         </div>
       )}
-      <RadarLegend palette={radarPalette} />
     </section>
   )
 }

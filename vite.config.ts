@@ -68,6 +68,10 @@ export default defineConfig(({ command, isPreview }) => {
               handler: 'NetworkOnly',
             },
             {
+              urlPattern: /^https:\/\/satellitemaps\.nesdis\.noaa\.gov\//,
+              handler: 'NetworkOnly',
+            },
+            {
               urlPattern: /^https:\/\/tiles\.openfreemap\.org\//,
               handler: 'NetworkOnly',
             },

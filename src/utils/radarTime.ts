@@ -28,7 +28,7 @@ export function formatMetadataRefreshTime(
   nowMs: number,
 ) {
   return timestampMs === null
-    ? 'Radar has not updated yet'
+    ? 'Not updated yet'
     : `Updated ${formatRelativeTime(timestampMs, nowMs)}`
 }
 

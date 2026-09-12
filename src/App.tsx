@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import { MapModeSelector } from './components/MapModeSelector'
 import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
+import { DEFAULT_CLOUD_OPACITY } from './config/cloud'
 import {
   DEFAULT_RADAR_OPACITY,
   RADAR_CLOCK_UPDATE_INTERVAL_MS,
   RADAR_PLAYBACK_INTERVAL_MS,
 } from './config/radar'
 import { useGeolocation } from './hooks/useGeolocation'
+import { useCloudImagery } from './hooks/useCloudImagery'
 import { useRadarFrames } from './hooks/useRadarFrames'
+import type { MapMode } from './types/weather'
+import { getCloudFreshness } from './utils/cloudTime'
 import {
   formatMetadataRefreshTime,
   getRadarFreshness,
@@ -17,9 +22,13 @@ import {
 function App() {
   const { location, message, requestLocation, status } = useGeolocation()
   const radar = useRadarFrames()
+  const [mapMode, setMapMode] = useState<MapMode>('radar')
+  const cloudEnabled = mapMode !== 'radar'
+  const cloud = useCloudImagery(cloudEnabled)
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [radarOpacity, setRadarOpacity] = useState(DEFAULT_RADAR_OPACITY)
+  const [cloudOpacity, setCloudOpacity] = useState(DEFAULT_CLOUD_OPACITY)
   const [nowMs, setNowMs] = useState(Date.now)
   const isRequesting = status === 'requesting'
   const buttonLabel = location ? 'Return to my location' : 'Use my location'
@@ -36,9 +45,17 @@ function App() {
     radar.latestFrame?.timestampSeconds ?? null,
     nowMs,
   )
+  const cloudFreshness = getCloudFreshness(cloud.frame?.timestampMs ?? null, nowMs)
   const radarUpdateLabel = radar.isRefreshing
-    ? 'Refreshing radar…'
-    : formatMetadataRefreshTime(radar.lastSuccessfulRefreshAt, nowMs)
+    ? 'Radar · Refreshing…'
+    : `Radar · ${formatMetadataRefreshTime(radar.lastSuccessfulRefreshAt, nowMs)}`
+  const cloudUpdateLabel = cloud.isRefreshing
+    ? 'Cloud · Refreshing…'
+    : cloud.status === 'error' || cloud.status === 'empty'
+      ? 'Cloud · Unavailable'
+    : cloud.lastSuccessfulRefreshAt === null
+      ? 'Cloud · Not loaded'
+      : `Cloud · ${formatMetadataRefreshTime(cloud.lastSuccessfulRefreshAt, nowMs)}`
   const radarNotice = radar.refreshError
     ? radar.refreshError
     : radar.status === 'error' || radar.status === 'empty'
@@ -46,7 +63,42 @@ function App() {
       : freshness.status === 'stale'
         ? `Radar data may be delayed. Latest frame is ${freshness.ageMinutes} min old.`
         : null
-  const isPlaybackActive = isPlaying && radar.frames.length >= 2
+  const cloudNotice = cloud.refreshError
+    ? cloud.refreshError
+    : cloud.status === 'error' || cloud.status === 'empty'
+      ? cloud.message
+      : cloud.frame?.timestampMs === null
+        ? 'Satellite imagery loaded, but NOAA did not provide its timestamp.'
+        : cloudFreshness.status === 'stale'
+          ? `Satellite imagery may be delayed. Latest image is ${cloudFreshness.ageMinutes} min old.`
+          : null
+  const isPlaybackActive =
+    isPlaying && mapMode !== 'cloud' && radar.frames.length >= 2
+  const visibleDataIsRefreshing =
+    (mapMode !== 'cloud' && radar.isRefreshing) ||
+    (mapMode !== 'radar' && cloud.isRefreshing)
+  const refreshLabel =
+    mapMode === 'radar'
+      ? 'Refresh radar'
+      : mapMode === 'cloud'
+        ? 'Refresh cloud'
+        : 'Refresh both'
+
+  function handleModeChange(nextMode: MapMode) {
+    setMapMode(nextMode)
+    if (nextMode === 'cloud') {
+      setIsPlaying(false)
+    }
+  }
+
+  function refreshVisibleData() {
+    if (mapMode !== 'cloud') {
+      void radar.refreshRadar()
+    }
+    if (mapMode !== 'radar') {
+      void cloud.refreshCloud()
+    }
+  }
 
   useEffect(() => {
     const interval = window.setInterval(
@@ -81,24 +133,33 @@ function App() {
     <main className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Local weather radar</p>
+          <p className="eyebrow">Local weather layers</p>
           <h1>RainWatch</h1>
+          <MapModeSelector value={mapMode} onChange={handleModeChange} />
         </div>
         <div className="location-controls">
           <div className="radar-refresh-controls">
-            <p
-              className={`radar-status radar-status--${freshness.status}`}
-              aria-live="polite"
-            >
-              {radarUpdateLabel}
-            </p>
+            <div className="provider-statuses" aria-live="polite">
+              {mapMode !== 'cloud' && (
+                <p className={`radar-status radar-status--${freshness.status}`}>
+                  {radarUpdateLabel}
+                </p>
+              )}
+              {mapMode !== 'radar' && (
+                <p
+                  className={`radar-status radar-status--${cloudFreshness.status}`}
+                >
+                  {cloudUpdateLabel}
+                </p>
+              )}
+            </div>
             <button
               type="button"
               className="refresh-button"
-              onClick={() => void radar.refreshRadar()}
-              disabled={radar.isRefreshing}
+              onClick={refreshVisibleData}
+              disabled={visibleDataIsRefreshing}
             >
-              {radar.isRefreshing ? 'Refreshing…' : 'Refresh radar'}
+              {visibleDataIsRefreshing ? 'Refreshing…' : refreshLabel}
             </button>
           </div>
           <button
@@ -118,6 +179,11 @@ function App() {
         </div>
       </header>
       <WeatherMap
+        buildCloudImageRequest={cloud.buildImageRequest}
+        cloudFrame={cloud.frame}
+        cloudNotice={cloudNotice}
+        cloudOpacity={cloudOpacity}
+        mapMode={mapMode}
         radarFrame={selectedFrame}
         radarPalette={radar.palette}
         radarNotice={radarNotice}
@@ -125,11 +191,16 @@ function App() {
         userLocation={location}
       />
       <Timeline
+        cloudFrame={cloud.frame}
+        cloudOpacity={cloudOpacity}
+        cloudStatus={cloud.status}
         frames={radar.frames}
         isPlaying={isPlaybackActive}
+        mapMode={mapMode}
         nowMs={nowMs}
         radarOpacity={radarOpacity}
         selectedIndex={selectedFrameIndex}
+        onChangeCloudOpacity={setCloudOpacity}
         onChangeOpacity={setRadarOpacity}
         onSelectFrame={(index) =>
           setSelectedFrameId(radar.frames[index]?.id ?? null)
