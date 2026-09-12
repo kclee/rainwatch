@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { RainViewerRadarProvider } from '../services/radar/RainViewerRadarProvider'
 import type { RadarFrame, RadarStatus } from '../types/weather'
 
@@ -9,83 +9,136 @@ interface RadarState {
   status: RadarStatus
   frames: RadarFrame[]
   message: string
+  isRefreshing: boolean
+  lastSuccessfulRefreshAt: number | null
+  refreshError: string | null
 }
 
 const initialState: RadarState = {
   status: 'loading',
   frames: [],
   message: 'Loading recent radar…',
+  isRefreshing: true,
+  lastSuccessfulRefreshAt: null,
+  refreshError: null,
 }
 
 export function useRadarFrames() {
   const [state, setState] = useState<RadarState>(initialState)
+  const isMountedRef = useRef(false)
+  const requestControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
+  const refreshRadar = useCallback(async () => {
+    if (requestControllerRef.current) {
+      return
+    }
+
     const controller = new AbortController()
-    let isActive = true
+    requestControllerRef.current = controller
+    let didTimeOut = false
     const timeout = window.setTimeout(
-      () => controller.abort(),
+      () => {
+        didTimeOut = true
+        controller.abort()
+      },
       REQUEST_TIMEOUT_MS,
     )
 
-    radarProvider
-      .getHistoricalFrames(controller.signal)
-      .then((frames) => {
-        window.clearTimeout(timeout)
-        if (!isActive) {
-          return
-        }
+    setState((currentState) => ({
+      ...currentState,
+      status: currentState.frames.length > 0 ? currentState.status : 'loading',
+      message:
+        currentState.frames.length > 0
+          ? currentState.message
+          : 'Loading recent radar…',
+      isRefreshing: true,
+      refreshError: null,
+    }))
 
-        if (frames.length === 0) {
-          setState({
-            status: 'empty',
-            frames: [],
-            message:
-              'RainViewer has no historical radar frames available right now.',
-          })
-          return
-        }
+    try {
+      const frames = await radarProvider.getHistoricalFrames(controller.signal)
+      if (!isMountedRef.current) {
+        return
+      }
 
+      const refreshedAt = Date.now()
+      if (frames.length === 0) {
         setState({
-          status: 'ready',
-          frames,
-          message: `${frames.length} recent radar frames available.`,
+          status: 'empty',
+          frames: [],
+          message: 'Radar data unavailable. RainViewer returned no recent frames.',
+          isRefreshing: false,
+          lastSuccessfulRefreshAt: refreshedAt,
+          refreshError: null,
         })
+        return
+      }
+
+      setState({
+        status: 'ready',
+        frames,
+        message: `${frames.length} recent radar frames available.`,
+        isRefreshing: false,
+        lastSuccessfulRefreshAt: refreshedAt,
+        refreshError: null,
       })
-      .catch((error: unknown) => {
-        window.clearTimeout(timeout)
-        if (!isActive) {
-          return
+    } catch (error: unknown) {
+      if (!isMountedRef.current) {
+        return
+      }
+
+      const reason = didTimeOut
+        ? 'The RainViewer request timed out.'
+        : navigator.onLine
+          ? error instanceof Error
+            ? error.message
+            : 'RainViewer could not be reached.'
+          : 'The browser is offline.'
+
+      setState((currentState) => {
+        if (currentState.frames.length > 0) {
+          return {
+            ...currentState,
+            status: 'ready',
+            isRefreshing: false,
+            refreshError: `${reason} Showing the last available radar frames.`,
+          }
         }
 
-        if (controller.signal.aborted) {
-          setState({
-            status: 'error',
-            frames: [],
-            message: 'The RainViewer request timed out. The basemap still works.',
-          })
-          return
-        }
-
-        setState({
+        return {
+          ...currentState,
           status: 'error',
           frames: [],
-          message:
-            error instanceof Error
-              ? `${error.message} The basemap still works.`
-              : 'Recent radar could not be loaded. The basemap still works.',
-        })
+          message: `Radar data unavailable. ${reason} The basemap still works.`,
+          isRefreshing: false,
+          refreshError: null,
+        }
       })
-
-    return () => {
-      isActive = false
+    } finally {
       window.clearTimeout(timeout)
-      controller.abort()
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null
+      }
     }
   }, [])
+
+  useEffect(() => {
+    isMountedRef.current = true
+    const initialRequest = window.setTimeout(() => void refreshRadar(), 0)
+
+    return () => {
+      isMountedRef.current = false
+      window.clearTimeout(initialRequest)
+      const controller = requestControllerRef.current
+      requestControllerRef.current = null
+      controller?.abort()
+    }
+  }, [refreshRadar])
 
   return {
     ...state,
     latestFrame: state.frames.at(-1) ?? null,
+    palette: radarProvider.palette,
+    refreshRadar,
   }
 }

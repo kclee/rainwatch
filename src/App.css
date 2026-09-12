@@ -38,6 +38,13 @@ h1 {
   gap: 0.35rem;
 }
 
+.radar-refresh-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
 .radar-status {
   margin: 0;
   padding: 0.38rem 0.65rem;
@@ -49,14 +56,15 @@ h1 {
   font-weight: 700;
 }
 
-.radar-status--error,
-.radar-status--empty {
+.radar-status--stale,
+.radar-status--unavailable {
   border-color: rgba(251, 191, 36, 0.35);
   color: #fef3c7;
   background: rgba(120, 53, 15, 0.82);
 }
 
-.location-button {
+.location-button,
+.refresh-button {
   min-height: 2.75rem;
   padding: 0.65rem 1rem;
   border: 1px solid rgba(125, 211, 252, 0.55);
@@ -67,18 +75,97 @@ h1 {
   font-weight: 700;
 }
 
-.location-button:hover:not(:disabled) {
+.refresh-button {
+  background: #172554;
+}
+
+.location-button:hover:not(:disabled),
+.refresh-button:hover:not(:disabled) {
   background: #075985;
 }
 
-.location-button:focus-visible {
+.location-button:focus-visible,
+.refresh-button:focus-visible {
   outline: 3px solid #7dd3fc;
   outline-offset: 2px;
 }
 
-.location-button:disabled {
+.location-button:disabled,
+.refresh-button:disabled {
   cursor: wait;
   opacity: 0.7;
+}
+
+.radar-notice {
+  position: absolute;
+  z-index: 2;
+  top: 1rem;
+  left: 1rem;
+  max-width: min(28rem, calc(100% - 5rem));
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 0.65rem;
+  color: #fef3c7;
+  background: rgba(120, 53, 15, 0.9);
+  box-shadow: 0 0.5rem 1.5rem rgba(2, 6, 23, 0.2);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.radar-legend {
+  position: absolute;
+  z-index: 2;
+  bottom: 2.75rem;
+  left: 1rem;
+  max-width: min(31rem, calc(100% - 5rem));
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 0.65rem;
+  color: #0f172a;
+  background: rgba(248, 250, 252, 0.9);
+  box-shadow: 0 0.35rem 1rem rgba(2, 6, 23, 0.2);
+  backdrop-filter: blur(0.25rem);
+  pointer-events: none;
+}
+
+.radar-legend p {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.radar-legend p span,
+.radar-legend small {
+  color: #475569;
+  font-weight: 600;
+}
+
+.radar-legend__scale {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.radar-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.radar-legend__swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid rgba(15, 23, 42, 0.25);
+  border-radius: 0.2rem;
+}
+
+.radar-legend small {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  line-height: 1.25;
 }
 
 .location-status {
@@ -209,6 +296,11 @@ h1 {
 }
 
 .timeline-time time {
+  color: #cbd5e1;
+  font-size: 0.75rem;
+}
+
+.timeline-time strong {
   color: #f8fafc;
   font-size: 0.9rem;
   font-weight: 700;
@@ -268,6 +360,12 @@ h1 {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
+  .radar-refresh-controls {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .location-button {
     justify-self: end;
     padding-inline: 0.7rem;
@@ -297,6 +395,21 @@ h1 {
     min-height: 24rem;
     border: 0;
     border-radius: 0;
+  }
+
+  .radar-legend {
+    bottom: 5rem;
+    left: 0.65rem;
+    max-width: calc(100% - 4.5rem);
+    padding: 0.45rem 0.55rem;
+  }
+
+  .radar-legend__scale {
+    gap: 0.4rem;
+  }
+
+  .radar-legend small {
+    display: none;
   }
 
   .timeline {

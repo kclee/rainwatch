@@ -1,4 +1,5 @@
 import type { RadarFrame } from '../types/weather'
+import { formatRelativeTime } from '../utils/radarTime'
 
 const frameTimeFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',
@@ -12,6 +13,7 @@ interface TimelineProps {
   isPlaying: boolean
   radarOpacity: number
   selectedIndex: number
+  nowMs: number
   onChangeOpacity: (opacity: number) => void
   onSelectFrame: (index: number) => void
   onTogglePlayback: () => void
@@ -22,6 +24,7 @@ export function Timeline({
   isPlaying,
   radarOpacity,
   selectedIndex,
+  nowMs,
   onChangeOpacity,
   onSelectFrame,
   onTogglePlayback,
@@ -33,6 +36,11 @@ export function Timeline({
 
   const selectedDate = new Date(selectedFrame.timestampSeconds * 1000)
   const selectedTime = frameTimeFormatter.format(selectedDate)
+  const relativeTime = formatRelativeTime(selectedDate.getTime(), nowMs)
+  const relativeLabel =
+    selectedIndex === frames.length - 1
+      ? `Latest · ${relativeTime}`
+      : relativeTime
   const opacityPercent = Math.round(radarOpacity * 100)
 
   return (
@@ -63,11 +71,12 @@ export function Timeline({
           max={frames.length - 1}
           step="1"
           value={selectedIndex}
-          aria-valuetext={`${selectedTime}, frame ${selectedIndex + 1} of ${frames.length}`}
+          aria-valuetext={`${relativeLabel}, ${selectedTime}, frame ${selectedIndex + 1} of ${frames.length}`}
           onChange={(event) => onSelectFrame(Number(event.target.value))}
         />
       </div>
       <div className="timeline-time" aria-live={isPlaying ? 'off' : 'polite'}>
+        <strong>{relativeLabel}</strong>
         <time dateTime={selectedDate.toISOString()}>{selectedTime}</time>
         <span>
           Frame {selectedIndex + 1} of {frames.length}

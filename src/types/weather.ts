@@ -20,3 +20,16 @@ export interface RadarFrame {
 }
 
 export type RadarStatus = 'loading' | 'ready' | 'empty' | 'error'
+
+export type RadarFreshnessStatus = 'fresh' | 'stale' | 'unavailable'
+
+export interface RadarLegendItem {
+  label: string
+  color: string
+}
+
+export interface RadarPalette {
+  name: string
+  items: readonly RadarLegendItem[]
+  note: string
+}

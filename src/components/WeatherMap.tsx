@@ -12,7 +12,8 @@ import mapLibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&ur
 import type { RasterTileSource } from 'maplibre-gl'
 import { mapConfig } from '../config/map'
 import { DEFAULT_RADAR_OPACITY } from '../config/radar'
-import type { RadarFrame, UserLocation } from '../types/weather'
+import type { RadarFrame, RadarPalette, UserLocation } from '../types/weather'
+import { RadarLegend } from './RadarLegend'
 
 const RADAR_SOURCE_ID = 'rainwatch-radar'
 const RADAR_LAYER_ID = 'rainwatch-radar-layer'
@@ -21,12 +22,16 @@ setWorkerUrl(mapLibreWorkerUrl)
 
 interface WeatherMapProps {
   radarFrame: RadarFrame | null
+  radarPalette: RadarPalette
+  radarNotice: string | null
   radarOpacity: number
   userLocation: UserLocation | null
 }
 
 export function WeatherMap({
   radarFrame,
+  radarPalette,
+  radarNotice,
   radarOpacity,
   userLocation,
 }: WeatherMapProps) {
@@ -81,6 +86,12 @@ export function WeatherMap({
       setMapError(event.error?.message ?? 'The basemap could not be loaded.')
     })
 
+    map.on('sourcedata', (event) => {
+      if (event.sourceId === RADAR_SOURCE_ID && event.isSourceLoaded) {
+        setRadarTileError(null)
+      }
+    })
+
     mapRef.current = map
 
     return () => {
@@ -94,11 +105,20 @@ export function WeatherMap({
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !isMapReady || !radarFrame) {
+    if (!map || !isMapReady) {
       return
     }
 
-    setRadarTileError(null)
+    if (!radarFrame) {
+      if (map.getLayer(RADAR_LAYER_ID)) {
+        map.removeLayer(RADAR_LAYER_ID)
+      }
+      if (map.getSource(RADAR_SOURCE_ID)) {
+        map.removeSource(RADAR_SOURCE_ID)
+      }
+      return
+    }
+
     const existingSource = map.getSource(RADAR_SOURCE_ID) as
       | RasterTileSource
       | undefined
@@ -189,6 +209,12 @@ export function WeatherMap({
           {radarTileError}
         </div>
       )}
+      {radarNotice && !mapError && !radarTileError && (
+        <div className="radar-notice" role="status">
+          {radarNotice}
+        </div>
+      )}
+      <RadarLegend palette={radarPalette} />
     </section>
   )
 }
