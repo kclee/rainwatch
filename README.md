@@ -124,4 +124,4 @@ No backend server, database, authentication system, or API key is required for v
 
 ## Next milestone
 
-Verify the 0.2a GitHub Pages deployment and its service-worker update, then pause for product review before defining 0.2b.
+Version 0.2a is deployed on GitHub Pages. Pause for product review before defining 0.2b.
