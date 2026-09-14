@@ -4,7 +4,10 @@ import { MapModeSelector } from './components/MapModeSelector'
 import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
 import { DEFAULT_CLOUD_OPACITY } from './config/cloud'
-import { DEFAULT_CLOUD_COVER_OPACITY } from './config/cloudCover'
+import {
+  DEFAULT_CLOUD_COVER_OPACITY,
+  parseCloudCoverGridSize,
+} from './config/cloudCover'
 import {
   DEFAULT_RADAR_OPACITY,
   RADAR_CLOCK_UPDATE_INTERVAL_MS,
@@ -30,8 +33,11 @@ function App() {
   const showRadar = mapMode === 'radar' || mapMode === 'both'
   const showSatellite = mapMode === 'satellite' || mapMode === 'both'
   const showCloudCover = mapMode === 'cloud-cover'
+  const cloudCoverGridSizeOverride = parseCloudCoverGridSize(
+    window.location.search,
+  )
   const satellite = useCloudImagery(showSatellite)
-  const cloudCover = useCloudCover(showCloudCover)
+  const cloudCover = useCloudCover(showCloudCover, cloudCoverGridSizeOverride)
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [radarOpacity, setRadarOpacity] = useState(DEFAULT_RADAR_OPACITY)

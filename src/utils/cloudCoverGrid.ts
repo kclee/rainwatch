@@ -61,8 +61,9 @@ export function gridSizeForZoom(zoom: number) {
 
 export function buildCloudCoverGrid(
   viewport: CloudCoverViewport,
+  sizeOverride: number | null = null,
 ): CloudCoverGrid {
-  const size = gridSizeForZoom(viewport.zoom)
+  const size = sizeOverride ?? gridSizeForZoom(viewport.zoom)
   const longitudeSpan = unwrappedLongitudeSpan(viewport)
   const latitudeSpan = Math.max(0.01, viewport.north - viewport.south)
   const west = viewport.west - longitudeSpan * CLOUD_COVER_GRID_OVERSCAN_RATIO

@@ -144,6 +144,7 @@ export function WeatherMap({
   const [radarTileError, setRadarTileError] = useState<string | null>(null)
   const [satelliteImageError, setSatelliteImageError] = useState<string | null>(null)
   const [cloudCoverLayerError, setCloudCoverLayerError] = useState<string | null>(null)
+  const panelRef = useRef<HTMLElement | null>(null)
   const cloudCoverData = useMemo(
     () => (cloudCoverDataset ? cloudCoverGeoJson(cloudCoverDataset) : null),
     [cloudCoverDataset],
@@ -299,12 +300,18 @@ export function WeatherMap({
     if (mapMode !== 'cloud-cover' || !cloudCoverData) {
       if (map.getLayer(CLOUD_COVER_LAYER_ID)) map.removeLayer(CLOUD_COVER_LAYER_ID)
       if (map.getSource(CLOUD_COVER_SOURCE_ID)) map.removeSource(CLOUD_COVER_SOURCE_ID)
+      panelRef.current?.removeAttribute('data-cloud-cover-render-ms')
       return
     }
 
+    const renderStartedAt = performance.now()
     const existingSource = map.getSource(CLOUD_COVER_SOURCE_ID) as GeoJSONSource | undefined
     if (existingSource) {
       existingSource.setData(cloudCoverData)
+      panelRef.current?.setAttribute(
+        'data-cloud-cover-render-ms',
+        String(performance.now() - renderStartedAt),
+      )
       return
     }
     map.addSource(CLOUD_COVER_SOURCE_ID, { type: 'geojson', data: cloudCoverData })
@@ -322,6 +329,10 @@ export function WeatherMap({
         'fill-outline-color': 'rgba(255, 255, 255, 0.14)',
       },
     }, firstSymbolLayer)
+    panelRef.current?.setAttribute(
+      'data-cloud-cover-render-ms',
+      String(performance.now() - renderStartedAt),
+    )
   }, [cloudCoverData, isMapReady, mapMode])
 
   useEffect(() => {
@@ -387,11 +398,15 @@ export function WeatherMap({
   const cloudCoverError = cloudCoverLayerError ?? cloudCoverNotice
   return (
     <section
+      ref={panelRef}
       className="map-panel"
       aria-label="Interactive weather map"
       data-cloud-cover-cells={cloudCoverDataset?.cells.length}
       data-cloud-cover-requests={cloudCoverDataset?.requestCount}
+      data-cloud-cover-request-url-length={cloudCoverDataset?.requestUrlLength}
       data-cloud-cover-bytes={cloudCoverDataset?.responseBytes}
+      data-cloud-cover-response-ms={cloudCoverDataset?.responseDurationMs}
+      data-cloud-cover-processing-ms={cloudCoverDataset?.processingDurationMs}
       data-cloud-cover-fetched-at={cloudCoverDataset?.fetchedAtMs}
     >
       <div ref={containerRef} className="map-container" />

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { CloudCoverCell, CloudCoverViewport } from '../types/weather.ts'
+import { parseCloudCoverGridSize } from '../config/cloudCover.ts'
 import {
   buildCloudCoverGrid,
   cloudCoverCategory,
@@ -19,6 +20,17 @@ const viewport: CloudCoverViewport = {
 test('uses a modest adaptive sampling grid', () => {
   assert.equal(buildCloudCoverGrid(viewport).points.length, 25)
   assert.equal(buildCloudCoverGrid({ ...viewport, zoom: 8 }).points.length, 49)
+})
+
+test('accepts an experimental fixed sampling density', () => {
+  assert.equal(buildCloudCoverGrid(viewport, 11).points.length, 121)
+  assert.equal(buildCloudCoverGrid(viewport, 21).points.length, 441)
+})
+
+test('accepts only the documented cloudGrid experiment values', () => {
+  assert.equal(parseCloudCoverGridSize('?cloudGrid=15'), 15)
+  assert.equal(parseCloudCoverGridSize('?cloudGrid=13'), null)
+  assert.equal(parseCloudCoverGridSize(''), null)
 })
 
 test('ignores tiny moves but detects meaningful viewport changes', () => {

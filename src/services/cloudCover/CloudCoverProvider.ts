@@ -6,7 +6,9 @@ import type {
 export interface CloudCoverProviderResult {
   readings: CloudCoverReading[]
   requestCount: number
+  requestUrlLength: number
   responseBytes: number
+  responseDurationMs: number
 }
 
 export interface CloudCoverProvider {

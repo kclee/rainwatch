@@ -110,6 +110,9 @@ export interface CloudCoverDataset {
   gridColumns: number
   gridRows: number
   requestCount: number
+  requestUrlLength: number
   responseBytes: number
+  responseDurationMs: number
+  processingDurationMs: number
   viewport: CloudCoverViewport
 }

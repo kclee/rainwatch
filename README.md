@@ -13,6 +13,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-14-cloud-density-experiment.md`](docs/journal/2026-09-14-cloud-density-experiment.md) records the 7 × 7 through 21 × 21 Cloud Cover density evaluation.
 - [`docs/journal/2026-09-14-0.2c.md`](docs/journal/2026-09-14-0.2c.md) records the model Cloud Cover milestone and its verification.
 - [`docs/journal/2026-09-12-0.2b.md`](docs/journal/2026-09-12-0.2b.md) records the satellite milestone and its verification.
 - [`docs/journal/2026-09-12.md`](docs/journal/2026-09-12.md) records the latest implementation details, verification, changed files, and commit subjects.
@@ -21,6 +22,8 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Current status
 
 RainWatch 0.2c (`0.2.0-beta.2`) is implemented. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Cloud Cover displays Open-Meteo's current model-derived total cloud fraction as an interpretive percentage grid. Radar + Satellite preserves the former Both behavior and does not add Cloud Cover to the stack.
+
+A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
 
 ## Prerequisites
 
@@ -109,6 +112,8 @@ The Open-Meteo integration is isolated under `src/services/cloudCover/`. It call
 
 Cloud Cover uses a 5 × 5 grid below zoom 5 and a 7 × 7 grid at regional/local zooms. One cell represents each sampled model value; RainWatch deliberately does not interpolate between points or imply street-level precision. The grid extends slightly beyond the viewport, small moves are ignored, meaningful completed moves are debounced, and up to 49 coordinates fit in one Open-Meteo request. Results are reused in memory for ten minutes when the same sampled viewport is revisited. The displayed model-valid time and RainWatch's fetch time remain separate.
 
+For the documented density experiment only, `?cloudGrid=7`, `11`, `15`, or `21` fixes the grid dimensions for that page load. Unsupported values are ignored. This is a developer test mechanism, not a permanent user setting.
+
 The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
 
 MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
@@ -144,4 +149,4 @@ No backend server, database, authentication system, or API key is required for v
 
 ## Next milestone
 
-After Version 0.2c deployment verification, pause for product review. A sensible next milestone is accessibility and real-device validation rather than wind or cloud animation.
+Pause for product review. The density experiment recommends evaluating interpolation or smoothing next if improving Cloud Cover is the priority, but that work has not started. Accessibility and real-device validation remain sensible alternatives.

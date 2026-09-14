@@ -36,7 +36,7 @@ const initialState: CloudCoverState = {
   refreshError: null,
 }
 
-export function useCloudCover(enabled: boolean) {
+export function useCloudCover(enabled: boolean, gridSizeOverride: number | null) {
   const [state, setState] = useState<CloudCoverState>(initialState)
   const isMountedRef = useRef(false)
   const controllerRef = useRef<AbortController | null>(null)
@@ -57,7 +57,7 @@ export function useCloudCover(enabled: boolean) {
       }
 
       lastViewportRef.current = viewport
-      const grid = buildCloudCoverGrid(viewport)
+      const grid = buildCloudCoverGrid(viewport, gridSizeOverride)
       const cacheKey = cloudCoverGridKey(grid)
       const cached = cacheRef.current.get(cacheKey)
       const now = Date.now()
@@ -105,6 +105,7 @@ export function useCloudCover(enabled: boolean) {
           return
         }
 
+        const processingStartedAt = performance.now()
         const cells = mergeGridReadings(grid, result.readings)
         const fetchedAtMs = Date.now()
         if (cells.length === 0) {
@@ -133,7 +134,10 @@ export function useCloudCover(enabled: boolean) {
           gridColumns: grid.columns,
           gridRows: grid.rows,
           requestCount: result.requestCount,
+          requestUrlLength: result.requestUrlLength,
           responseBytes: result.responseBytes,
+          responseDurationMs: result.responseDurationMs,
+          processingDurationMs: performance.now() - processingStartedAt,
           viewport,
         }
         cacheRef.current.set(cacheKey, dataset)
@@ -189,7 +193,7 @@ export function useCloudCover(enabled: boolean) {
         }
       }
     },
-    [enabled],
+    [enabled, gridSizeOverride],
   )
 
   const refreshCloudCover = useCallback(() => {

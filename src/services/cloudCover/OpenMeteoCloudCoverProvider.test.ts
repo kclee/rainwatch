@@ -17,9 +17,12 @@ test('batches coordinates and maps current cloud-cover values', async () => {
   ])
 
   assert.equal(result.requestCount, 1)
+  assert.equal(result.requestUrlLength, requestedUrl.length)
+  assert.ok(result.responseBytes > 0)
+  assert.ok(result.responseDurationMs >= 0)
   assert.deepEqual(result.readings.map((reading) => reading.cloudCoverPercent), [12, 84])
   assert.match(requestedUrl, /current=cloud_cover/)
-  assert.match(requestedUrl, /latitude=30\.2672%2C25\.0330/)
+  assert.match(requestedUrl, /latitude=30\.2672,25\.0330/)
 })
 
 test('rejects unsuccessful provider responses', async () => {
@@ -27,5 +30,15 @@ test('rejects unsuccessful provider responses', async () => {
   await assert.rejects(
     provider.getCurrentCloudCover([{ id: 'a', latitude: 30, longitude: -97 }]),
     /failed \(503\)/,
+  )
+})
+
+test('reports request length when a single batch cannot be sent', async () => {
+  const provider = new OpenMeteoCloudCoverProvider(async () => {
+    throw new TypeError('Failed to fetch')
+  })
+  await assert.rejects(
+    provider.getCurrentCloudCover([{ id: 'a', latitude: 30, longitude: -97 }]),
+    /\d+-character URL.*Failed to fetch/,
   )
 })

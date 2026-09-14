@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2c deployed</span>
+      <span class="status">Version 0.2c deployed · Density experiment complete</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Product review.</strong> Version 0.2c is live with lightweight model-derived Total Cloud Cover. Pause before defining another data layer.</p>
+      <p><strong>Product review.</strong> The density experiment found 15 × 15 to be the best cell-based compromise, but sampling alone did not remove the checkerboard effect. Interpolation or smoothing is recommended only if separately authorized.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -111,6 +111,7 @@
           <li class="done">Separate model time and checked time</li>
           <li class="done">Independent Cloud Cover opacity and 45-minute freshness</li>
           <li class="done">Meaningful-move threshold and ten-minute memory reuse</li>
+          <li class="done">7 × 7 through 21 × 21 Cloud Cover density comparison</li>
           <li class="done">Open-Meteo remains network-only in the PWA</li>
           <li class="done">Build, lint, and browser checks</li>
           <li class="done">Repository-derived GitHub Pages base path</li>
@@ -150,6 +151,11 @@
       <article class="card wide">
         <h2>Latest verification</h2>
         <ul>
+          <li>The density experiment kept one Open-Meteo request for 49, 121, 225, and 441 samples.</li>
+          <li>Regional responses measured approximately 15.7, 38.7, 72.2, and 141.5 KiB respectively.</li>
+          <li>Literal coordinate commas kept the 21 × 21 URL below the practical request-size limit; the percent-encoded 9.8 KB diagnostic URL returned HTTP 414.</li>
+          <li>Rapid repeated comparisons produced HTTP 429 responses; the app kept the last available grid and remained interactive.</li>
+          <li>15 × 15 was the best cell-based compromise, but even 21 × 21 retained visible rectangular boundaries.</li>
           <li>Open-Meteo accepted Austin, Taipei, and London in one multi-coordinate request with browser-compatible CORS.</li>
           <li>A continental 5 × 5 view used one request and approximately 8.1 KB; a regional 7 × 7 view used one request and approximately 16.0 KB.</li>
           <li>A tiny pan caused no Cloud Cover refetch; a meaningful pan caused one replacement batch.</li>
@@ -199,7 +205,7 @@
     </section>
 
     <footer>
-      Detailed implementation evidence: <a href="docs/journal/2026-09-14-0.2c.md">docs/journal/2026-09-14-0.2c.md</a>. Updated 2026-09-14.
+      Latest experiment evidence: <a href="docs/journal/2026-09-14-cloud-density-experiment.md">docs/journal/2026-09-14-cloud-density-experiment.md</a>. Version 0.2c evidence: <a href="docs/journal/2026-09-14-0.2c.md">docs/journal/2026-09-14-0.2c.md</a>. Updated 2026-09-14.
     </footer>
   </main>
 </body>
