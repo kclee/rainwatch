@@ -81,7 +81,7 @@ At the whole-USA scale, denser grids add more regional samples but do not remove
 - A 21 × 21 mobile pan completed a fresh one-request update in about 2.0 seconds including the gesture, move completion, debounce, network, and rendering.
 - An immediately following 21 × 21 zoom received HTTP 429; the map remained interactive and retained its last grid.
 - At 390 × 844, both 15 × 15 and 21 × 21 rendered smoothly. Controls remained usable, the four modes retained their 2 × 2 layout, and no obvious memory or CPU abnormality appeared.
-- Browser console inspection found no application warnings or errors during successful runs.
+- Browser inspection found no RainWatch application errors during successful runs. The development server did surface recurring OpenFreeMap/MapLibre boundary-filter warnings and temporary glyph-fetch warnings; these did not prevent the map, labels, or controls from rendering.
 
 Mobile reference:
 
