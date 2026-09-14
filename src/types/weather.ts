@@ -34,7 +34,7 @@ export interface RadarPalette {
   note: string
 }
 
-export type MapMode = 'radar' | 'cloud' | 'both'
+export type MapMode = 'radar' | 'satellite' | 'cloud-cover' | 'both'
 
 export type CloudStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error'
 
@@ -67,4 +67,49 @@ export interface CloudImageRequest {
     [number, number],
     [number, number],
   ]
+}
+
+export type CloudCoverStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error'
+
+export type CloudCoverFreshnessStatus = 'fresh' | 'stale' | 'unavailable'
+
+export interface CloudCoverCoordinate {
+  id: string
+  latitude: number
+  longitude: number
+}
+
+export interface CloudCoverReading extends CloudCoverCoordinate {
+  cloudCoverPercent: number
+  modelTimestampMs: number
+  intervalSeconds: number
+}
+
+export interface CloudCoverCell extends CloudCoverReading {
+  west: number
+  south: number
+  east: number
+  north: number
+}
+
+export interface CloudCoverViewport {
+  west: number
+  south: number
+  east: number
+  north: number
+  zoom: number
+}
+
+export interface CloudCoverDataset {
+  cells: CloudCoverCell[]
+  modelTimestampMs: number
+  intervalSeconds: number
+  fetchedAtMs: number
+  providerName: string
+  modelName: string
+  gridColumns: number
+  gridRows: number
+  requestCount: number
+  responseBytes: number
+  viewport: CloudCoverViewport
 }

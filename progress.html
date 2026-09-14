@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2b implemented</span>
+      <span class="status">Version 0.2c implemented</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Product review.</strong> Version 0.2b is live on GitHub Pages. Pause before defining the next bounded milestone.</p>
+      <p><strong>Deployment verification, then product review.</strong> Version 0.2c adds lightweight model-derived Total Cloud Cover. Pause before defining another data layer.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.2b keeps the focused static architecture while adding one latest NOAA GOES GeoColor image through Radar, Cloud, and Both modes. It has no backend, database, accounts, forecast AI, or native application.</p>
+        <p>Version 0.2c keeps the focused static architecture while separating observed NOAA Satellite imagery from model-derived Open-Meteo Cloud Cover. It has no backend, database, accounts, forecast AI, or native application.</p>
       </article>
 
       <article class="card">
@@ -97,13 +97,21 @@
           <li class="done">30-minute delayed-data warning</li>
           <li class="done">Last-available and unavailable radar handling</li>
           <li class="done">NOAA/NESDIS merged GOES GeoColor provider</li>
-          <li class="done">Radar, Cloud, and Both map modes</li>
+          <li class="done">Radar, Satellite, and Radar + Satellite map modes</li>
           <li class="done">Viewport-sized Web Mercator satellite export</li>
-          <li class="done">Cloud opacity and independent timestamp</li>
+          <li class="done">Satellite opacity and independent timestamp</li>
           <li class="done">35-minute satellite freshness threshold</li>
           <li class="done">Independent provider failure handling</li>
           <li class="done">Lazy cloud loading and move-end refresh</li>
           <li class="done">NOAA imagery remains network-only in the PWA</li>
+          <li class="done">Open-Meteo Total Cloud Cover provider</li>
+          <li class="done">One-request 5 × 5 and 7 × 7 coordinate batching</li>
+          <li class="done">Soft non-interpolated Cloud Cover cells</li>
+          <li class="done">Cloud Cover legend and approximate local summary</li>
+          <li class="done">Separate model time and checked time</li>
+          <li class="done">Independent Cloud Cover opacity and 45-minute freshness</li>
+          <li class="done">Meaningful-move threshold and ten-minute memory reuse</li>
+          <li class="done">Open-Meteo remains network-only in the PWA</li>
           <li class="done">Build, lint, and browser checks</li>
           <li class="done">Repository-derived GitHub Pages base path</li>
           <li class="done">Official GitHub Pages Actions workflow</li>
@@ -131,6 +139,8 @@
           <li><strong>Map:</strong> MapLibre GL JS 6.9.0</li>
           <li><strong>Basemap:</strong> configurable OpenFreeMap development style</li>
           <li><strong>Radar:</strong> RainViewer historical frames behind a provider interface</li>
+          <li><strong>Satellite:</strong> observed NOAA/NESDIS merged GOES GeoColor imagery</li>
+          <li><strong>Cloud Cover:</strong> Open-Meteo Best Match model percentages behind a provider interface</li>
           <li><strong>Location:</strong> browser Geolocation API with explicit user action</li>
           <li><strong>PWA:</strong> Vite PWA plugin and Workbox app-shell precache</li>
           <li><strong>Deployment:</strong> static GitHub Pages site at <code>/rainwatch/</code></li>
@@ -140,6 +150,12 @@
       <article class="card wide">
         <h2>Latest verification</h2>
         <ul>
+          <li>Open-Meteo accepted Austin, Taipei, and London in one multi-coordinate request with browser-compatible CORS.</li>
+          <li>A continental 5 × 5 view used one request and approximately 8.1 KB; a regional 7 × 7 view used one request and approximately 16.0 KB.</li>
+          <li>A tiny pan caused no Cloud Cover refetch; a meaningful pan caused one replacement batch.</li>
+          <li>Cloud Cover model time, checked time, legend, local/map-center summary, manual refresh, and opacity all worked.</li>
+          <li>Six automated provider, grid, threshold, category, failure, and summary tests passed.</li>
+          <li>At 390 × 844, the four-mode selector used two rows of 44-pixel buttons and the document had no horizontal overflow.</li>
           <li><code>npm run build</code> passed.</li>
           <li><code>npm run lint</code> passed.</li>
           <li>Fresh, delayed, and unavailable time-state checks passed, including the 30-minute boundary.</li>
@@ -151,7 +167,7 @@
           <li>NOAA metadata and image requests returned HTTP 200 with CORS access for the GitHub Pages origin.</li>
           <li>Cloud and Both modes rendered the latest GeoColor imagery aligned with the MapLibre basemap across zoom changes.</li>
           <li>Radar and cloud timestamps remained visibly separate; refresh preserved radar selection and playback.</li>
-          <li>Cloud opacity worked from 0 to 100 percent without downloading a replacement image.</li>
+          <li>Satellite opacity worked from 0 to 100 percent without downloading a replacement image.</li>
           <li>Provider checks covered success, empty metadata, HTTP failure, request-size caps, Web Mercator parameters, and the 35-minute stale boundary.</li>
           <li>At 390 × 844, all three modes remained usable with no horizontal overflow.</li>
           <li>The 0.2b GitHub Pages workflow completed successfully. After one service-worker reload, the public HTTPS site loaded live NOAA imagery in Both mode with no console errors.</li>
@@ -181,7 +197,7 @@
     </section>
 
     <footer>
-      Detailed implementation evidence: <a href="docs/journal/2026-09-12-0.2b.md">docs/journal/2026-09-12-0.2b.md</a>. Updated 2026-09-12.
+      Detailed implementation evidence: <a href="docs/journal/2026-09-14-0.2c.md">docs/journal/2026-09-14-0.2c.md</a>. Updated 2026-09-14.
     </footer>
   </main>
 </body>

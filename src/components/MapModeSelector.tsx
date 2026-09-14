@@ -2,8 +2,9 @@ import type { MapMode } from '../types/weather'
 
 const modes: Array<{ value: MapMode; label: string }> = [
   { value: 'radar', label: 'Radar' },
-  { value: 'cloud', label: 'Cloud' },
-  { value: 'both', label: 'Both' },
+  { value: 'satellite', label: 'Satellite' },
+  { value: 'cloud-cover', label: 'Cloud Cover' },
+  { value: 'both', label: 'Radar + Satellite' },
 ]
 
 interface MapModeSelectorProps {

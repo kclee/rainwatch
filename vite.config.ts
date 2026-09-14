@@ -28,7 +28,7 @@ export default defineConfig(({ command, isPreview }) => {
           id: './',
           name: 'RainWatch',
           short_name: 'RainWatch',
-          description: 'A focused weather radar and satellite cloud viewer.',
+          description: 'A focused radar, satellite, and model Cloud Cover viewer.',
           start_url: './',
           scope: './',
           display: 'standalone',
@@ -69,6 +69,10 @@ export default defineConfig(({ command, isPreview }) => {
             },
             {
               urlPattern: /^https:\/\/satellitemaps\.nesdis\.noaa\.gov\//,
+              handler: 'NetworkOnly',
+            },
+            {
+              urlPattern: /^https:\/\/api\.open-meteo\.com\//,
               handler: 'NetworkOnly',
             },
             {

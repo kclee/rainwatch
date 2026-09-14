@@ -31,7 +31,8 @@ h1 {
 }
 
 .map-mode-selector {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: repeat(4, auto);
   margin-top: 0.65rem;
   padding: 0.2rem;
   border: 1px solid rgba(125, 211, 252, 0.35);
@@ -148,6 +149,10 @@ h1 {
   pointer-events: none;
 }
 
+.weather-notices--with-summary {
+  top: 7.25rem;
+}
+
 .radar-notice {
   padding: 0.55rem 0.75rem;
   border: 1px solid rgba(251, 191, 36, 0.4);
@@ -172,6 +177,107 @@ h1 {
   box-shadow: 0 0.35rem 1rem rgba(2, 6, 23, 0.2);
   backdrop-filter: blur(0.25rem);
   pointer-events: none;
+}
+
+.cloud-cover-legend {
+  position: absolute;
+  z-index: 2;
+  bottom: 2.75rem;
+  left: 1rem;
+  max-width: min(38rem, calc(100% - 5rem));
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 0.65rem;
+  color: #0f172a;
+  background: rgba(248, 250, 252, 0.9);
+  box-shadow: 0 0.35rem 1rem rgba(2, 6, 23, 0.2);
+  backdrop-filter: blur(0.25rem);
+  pointer-events: none;
+}
+
+.cloud-cover-legend p {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.cloud-cover-legend p span,
+.cloud-cover-legend > small,
+.cloud-cover-legend__item small {
+  color: #475569;
+  font-weight: 600;
+}
+
+.cloud-cover-legend__scale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+}
+
+.cloud-cover-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.cloud-cover-legend__swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+  border: 1px solid rgba(15, 23, 42, 0.25);
+  border-radius: 0.2rem;
+}
+
+.cloud-cover-legend > small {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  line-height: 1.25;
+}
+
+.cloud-cover-summary {
+  position: absolute;
+  z-index: 2;
+  top: 1rem;
+  left: 1rem;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: 0.1rem 0.65rem;
+  max-width: calc(100% - 5rem);
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  border-radius: 0.7rem;
+  color: #0f172a;
+  background: rgba(248, 250, 252, 0.92);
+  box-shadow: 0 0.4rem 1.2rem rgba(2, 6, 23, 0.22);
+  backdrop-filter: blur(0.25rem);
+  pointer-events: none;
+}
+
+.cloud-cover-summary span,
+.cloud-cover-summary small {
+  grid-column: 1 / -1;
+  color: #475569;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.cloud-cover-summary strong {
+  color: #075985;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.cloud-cover-summary b {
+  font-size: 0.82rem;
+}
+
+.cloud-cover-summary small {
+  font-size: 0.6rem;
+  font-weight: 600;
 }
 
 .radar-legend p {
@@ -447,6 +553,11 @@ h1 {
     padding-inline: 0.8rem;
   }
 
+  .map-mode-selector {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .radar-refresh-controls {
     grid-column: 1 / -1;
     width: 100%;
@@ -494,6 +605,34 @@ h1 {
     left: 0.65rem;
     max-width: calc(100% - 4.5rem);
     padding: 0.45rem 0.55rem;
+  }
+
+  .cloud-cover-legend {
+    bottom: 5rem;
+    left: 0.65rem;
+    max-width: calc(100% - 4.5rem);
+    padding: 0.45rem 0.55rem;
+  }
+
+  .cloud-cover-legend__scale {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3rem 0.5rem;
+  }
+
+  .cloud-cover-legend > small,
+  .cloud-cover-legend__item small {
+    display: none;
+  }
+
+  .cloud-cover-summary {
+    top: 0.65rem;
+    left: 0.65rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .weather-notices--with-summary {
+    top: 6.5rem;
   }
 
   .radar-legend__scale {
