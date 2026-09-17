@@ -23,7 +23,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2c3 (`0.2.0-beta.3`) is implemented. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Cloud Cover displays Open-Meteo's current model-derived total cloud fraction as an interpretive percentage grid. Smooth Cloud · Lab renders the official Open-Meteo spatial field for usability evaluation. Radar + Satellite preserves the former combined behavior and does not add either Cloud Cover mode to the stack.
+RainWatch 0.2c3 (`0.2.0-beta.3`) is implemented and deployed. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Cloud Cover displays Open-Meteo's current model-derived total cloud fraction as an interpretive percentage grid. Smooth Cloud · Lab renders the official Open-Meteo spatial field for usability evaluation. Radar + Satellite preserves the former combined behavior and does not add either Cloud Cover mode to the stack.
 
 A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
 

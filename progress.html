@@ -54,7 +54,7 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2c3 · Smooth Cloud lab integrated</span>
+      <span class="status">Version 0.2c3 deployed · Smooth Cloud lab active</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
@@ -168,6 +168,9 @@
           <li>Radar, Satellite, and Radar + Satellite all loaded after the experiment with their existing controls and separate timestamps intact.</li>
           <li>At 390 × 844, all five mode buttons and Smooth Cloud controls remained reachable; client and scroll width were both exactly 390 pixels.</li>
           <li>Eleven automated checks, clean lint, and the production/PWA build passed. The experimental engine is lazy and excluded from the app-shell precache.</li>
+          <li>GitHub Pages run 35269007489 deployed implementation commit <code>ba8fc56</code> successfully.</li>
+          <li>The public PWA activated the five-mode 0.2c3 shell after one normal service-worker update reload, then loaded live Smooth Cloud with no browser warnings or errors.</li>
+          <li>The deployed 390 × 844 view again had no horizontal overflow; client and scroll width were both 390 pixels.</li>
           <li>The official <code>om://</code> MapLibre path rendered HRRR <code>cloud_cover</code> with linear interpolation and no checkerboard.</li>
           <li>A fresh regional view used 6 weather requests, four 64 KiB ranges, about 264 KiB, and became ready in 1.6 seconds.</li>
           <li>A fresh whole-USA view used 18 weather requests, sixteen 64 KiB ranges, about 1.0 MiB, and became ready in 2.4 seconds.</li>
