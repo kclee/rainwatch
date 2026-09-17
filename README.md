@@ -25,7 +25,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2e (`0.2.0-beta.5`) is implemented. Satellite mode discovers actual records from NOAA/NESDIS's rolling merged-GOES GeoColor archive and exposes the most recent three hours through a timeline, Previous/Next, keyboard-capable slider, Play/Pause, absolute time, relative age, frame count, and independent opacity. The newest archive frame is selected by default. Radar + Satellite deliberately keeps the existing latest-only satellite image, so radar and satellite histories are not presented as synchronized.
+RainWatch 0.2e (`0.2.0-beta.5`) is implemented and deployed. Satellite mode discovers actual records from NOAA/NESDIS's rolling merged-GOES GeoColor archive and exposes the most recent three hours through a timeline, Previous/Next, keyboard-capable slider, Play/Pause, absolute time, relative age, frame count, and independent opacity. The newest archive frame is selected by default. Radar + Satellite deliberately keeps the existing latest-only satellite image, so radar and satellite histories are not presented as synchronized.
 
 A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
 
