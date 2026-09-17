@@ -13,11 +13,12 @@ import {
   RADAR_CLOCK_UPDATE_INTERVAL_MS,
   RADAR_PLAYBACK_INTERVAL_MS,
 } from './config/radar'
+import { DEFAULT_SMOOTH_CLOUD_OPACITY } from './config/smoothCloud'
 import { useCloudCover } from './hooks/useCloudCover'
 import { useCloudImagery } from './hooks/useCloudImagery'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useRadarFrames } from './hooks/useRadarFrames'
-import type { MapMode } from './types/weather'
+import type { MapMode, SmoothCloudState } from './types/weather'
 import { selectCloudCoverSummary } from './utils/cloudCoverGrid'
 import { getCloudCoverFreshness } from './utils/cloudCoverTime'
 import { getCloudFreshness } from './utils/cloudTime'
@@ -33,6 +34,7 @@ function App() {
   const showRadar = mapMode === 'radar' || mapMode === 'both'
   const showSatellite = mapMode === 'satellite' || mapMode === 'both'
   const showCloudCover = mapMode === 'cloud-cover'
+  const showSmoothCloud = mapMode === 'smooth-cloud'
   const cloudCoverGridSizeOverride = parseCloudCoverGridSize(
     window.location.search,
   )
@@ -45,6 +47,16 @@ function App() {
   const [cloudCoverOpacity, setCloudCoverOpacity] = useState(
     DEFAULT_CLOUD_COVER_OPACITY,
   )
+  const [smoothCloudOpacity, setSmoothCloudOpacity] = useState(
+    DEFAULT_SMOOTH_CLOUD_OPACITY,
+  )
+  const [smoothCloudRefreshKey, setSmoothCloudRefreshKey] = useState(0)
+  const [smoothCloudState, setSmoothCloudState] = useState<SmoothCloudState>({
+    status: 'idle',
+    message: null,
+    validTimeMs: null,
+    loadedAtMs: null,
+  })
   const [nowMs, setNowMs] = useState(Date.now)
   const isRequesting = status === 'requesting'
   const buttonLabel = location ? 'Return to my location' : 'Use my location'
@@ -97,6 +109,16 @@ function App() {
       : cloudCover.lastSuccessfulRefreshAt === null
         ? 'Cloud Cover · Not loaded'
         : `Cloud Cover · ${formatMetadataRefreshTime(cloudCover.lastSuccessfulRefreshAt, nowMs)}`
+  const smoothCloudUpdateLabel =
+    smoothCloudState.status === 'loading'
+      ? 'Smooth Cloud · Loading…'
+      : smoothCloudState.status === 'ready'
+        ? 'Smooth Cloud · Experimental'
+        : smoothCloudState.status === 'unsupported'
+          ? 'Smooth Cloud · Outside coverage'
+          : smoothCloudState.status === 'error'
+            ? 'Smooth Cloud · Unavailable'
+            : 'Smooth Cloud · Not loaded'
   const radarNotice = radar.refreshError
     ? radar.refreshError
     : radar.status === 'error' || radar.status === 'empty'
@@ -124,7 +146,8 @@ function App() {
   const visibleDataIsRefreshing =
     (showRadar && radar.isRefreshing) ||
     (showSatellite && satellite.isRefreshing) ||
-    (showCloudCover && cloudCover.isRefreshing)
+    (showCloudCover && cloudCover.isRefreshing) ||
+    (showSmoothCloud && smoothCloudState.status === 'loading')
   const refreshLabel =
     mapMode === 'radar'
       ? 'Refresh radar'
@@ -132,7 +155,9 @@ function App() {
         ? 'Refresh satellite'
         : mapMode === 'cloud-cover'
           ? 'Refresh Cloud Cover'
-          : 'Refresh radar + satellite'
+          : mapMode === 'smooth-cloud'
+            ? 'Refresh Smooth Cloud'
+            : 'Refresh radar + satellite'
 
   function handleModeChange(nextMode: MapMode) {
     setMapMode(nextMode)
@@ -145,6 +170,9 @@ function App() {
     if (showRadar) void radar.refreshRadar()
     if (showSatellite) void satellite.refreshCloud()
     if (showCloudCover) void cloudCover.refreshCloudCover()
+    if (showSmoothCloud) {
+      setSmoothCloudRefreshKey((refreshKey) => refreshKey + 1)
+    }
   }
 
   useEffect(() => {
@@ -197,6 +225,11 @@ function App() {
                   {cloudCoverUpdateLabel}
                 </p>
               )}
+              {showSmoothCloud && (
+                <p className={`radar-status radar-status--${smoothCloudState.status === 'ready' ? 'fresh' : 'unavailable'}`}>
+                  {smoothCloudUpdateLabel}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -231,6 +264,7 @@ function App() {
         cloudCoverSummary={cloudCoverSummary}
         loadCloudCoverViewport={cloudCover.loadViewport}
         mapMode={mapMode}
+        onSmoothCloudStateChange={setSmoothCloudState}
         radarFrame={selectedFrame}
         radarPalette={radar.palette}
         radarNotice={radarNotice}
@@ -238,6 +272,9 @@ function App() {
         satelliteFrame={satellite.frame}
         satelliteNotice={satelliteNotice}
         satelliteOpacity={satelliteOpacity}
+        smoothCloudOpacity={smoothCloudOpacity}
+        smoothCloudRefreshKey={smoothCloudRefreshKey}
+        smoothCloudState={smoothCloudState}
         userLocation={location}
       />
       <Timeline
@@ -256,10 +293,13 @@ function App() {
         onChangeCloudCoverOpacity={setCloudCoverOpacity}
         onChangeOpacity={setRadarOpacity}
         onChangeSatelliteOpacity={setSatelliteOpacity}
+        onChangeSmoothCloudOpacity={setSmoothCloudOpacity}
         onSelectFrame={(index) =>
           setSelectedFrameId(radar.frames[index]?.id ?? null)
         }
         onTogglePlayback={() => setIsPlaying((playing) => !playing)}
+        smoothCloudOpacity={smoothCloudOpacity}
+        smoothCloudState={smoothCloudState}
       />
     </main>
   )

@@ -58,6 +58,10 @@ export default defineConfig(({ command, isPreview }) => {
         workbox: {
           cleanupOutdatedCaches: true,
           globPatterns: ['**/*.{js,css,html}'],
+          globIgnores: [
+            '**/dist-*.js',
+            '**/om_reader_wasm.web-*.js',
+          ],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/api\.rainviewer\.com\//,
@@ -73,6 +77,10 @@ export default defineConfig(({ command, isPreview }) => {
             },
             {
               urlPattern: /^https:\/\/api\.open-meteo\.com\//,
+              handler: 'NetworkOnly',
+            },
+            {
+              urlPattern: /^https:\/\/openmeteo\.s3\.amazonaws\.com\//,
               handler: 'NetworkOnly',
             },
             {

@@ -4,6 +4,7 @@ const modes: Array<{ value: MapMode; label: string }> = [
   { value: 'radar', label: 'Radar' },
   { value: 'satellite', label: 'Satellite' },
   { value: 'cloud-cover', label: 'Cloud Cover' },
+  { value: 'smooth-cloud', label: 'Smooth Cloud · Lab' },
   { value: 'both', label: 'Radar + Satellite' },
 ]
 

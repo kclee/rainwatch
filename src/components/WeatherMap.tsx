@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  addProtocol,
   AttributionControl,
   Map,
   Marker,
@@ -14,6 +15,13 @@ import { DEFAULT_CLOUD_OPACITY } from '../config/cloud'
 import { DEFAULT_CLOUD_COVER_OPACITY } from '../config/cloudCover'
 import { mapConfig } from '../config/map'
 import { DEFAULT_RADAR_OPACITY } from '../config/radar'
+import {
+  SMOOTH_CLOUD_ATTRIBUTION,
+  SMOOTH_CLOUD_DOMAIN,
+  SMOOTH_CLOUD_FAILURE_MESSAGE,
+  SMOOTH_CLOUD_SOURCE_URL,
+  SMOOTH_CLOUD_UNSUPPORTED_MESSAGE,
+} from '../config/smoothCloud'
 import type {
   CloudCoverCell,
   CloudCoverDataset,
@@ -24,11 +32,17 @@ import type {
   MapMode,
   RadarFrame,
   RadarPalette,
+  SmoothCloudState,
   UserLocation,
 } from '../types/weather'
 import { cloudCoverCategory } from '../utils/cloudCoverGrid'
+import {
+  getSmoothCloudValidTime,
+  isPointInsideBoundary,
+} from '../utils/smoothCloud'
 import { CloudCoverLegend } from './CloudCoverLegend'
 import { RadarLegend } from './RadarLegend'
+import { SmoothCloudLegend } from './SmoothCloudLegend'
 
 const RADAR_SOURCE_ID = 'rainwatch-radar'
 const RADAR_LAYER_ID = 'rainwatch-radar-layer'
@@ -36,6 +50,8 @@ const SATELLITE_SOURCE_ID = 'rainwatch-satellite'
 const SATELLITE_LAYER_ID = 'rainwatch-satellite-layer'
 const CLOUD_COVER_SOURCE_ID = 'rainwatch-cloud-cover'
 const CLOUD_COVER_LAYER_ID = 'rainwatch-cloud-cover-layer'
+const SMOOTH_CLOUD_SOURCE_ID = 'rainwatch-smooth-cloud'
+const SMOOTH_CLOUD_LAYER_ID = 'rainwatch-smooth-cloud-layer'
 
 setWorkerUrl(mapLibreWorkerUrl)
 
@@ -58,10 +74,14 @@ interface WeatherMapProps {
   cloudCoverSummary: CloudCoverSummary | null
   loadCloudCoverViewport: (viewport: CloudCoverViewport) => Promise<void>
   mapMode: MapMode
+  onSmoothCloudStateChange: (state: SmoothCloudState) => void
   radarFrame: RadarFrame | null
   radarPalette: RadarPalette
   radarNotice: string | null
   radarOpacity: number
+  smoothCloudOpacity: number
+  smoothCloudRefreshKey: number
+  smoothCloudState: SmoothCloudState
   userLocation: UserLocation | null
 }
 
@@ -130,10 +150,14 @@ export function WeatherMap({
   cloudCoverSummary,
   loadCloudCoverViewport,
   mapMode,
+  onSmoothCloudStateChange,
   radarFrame,
   radarPalette,
   radarNotice,
   radarOpacity,
+  smoothCloudOpacity,
+  smoothCloudRefreshKey,
+  smoothCloudState,
   userLocation,
 }: WeatherMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -145,10 +169,26 @@ export function WeatherMap({
   const [satelliteImageError, setSatelliteImageError] = useState<string | null>(null)
   const [cloudCoverLayerError, setCloudCoverLayerError] = useState<string | null>(null)
   const panelRef = useRef<HTMLElement | null>(null)
+  const mapModeRef = useRef(mapMode)
+  const smoothCloudOpacityRef = useRef(smoothCloudOpacity)
+  const smoothCloudValidTimeRef = useRef<number | null>(null)
+  const smoothCloudStateChangeRef = useRef(onSmoothCloudStateChange)
   const cloudCoverData = useMemo(
     () => (cloudCoverDataset ? cloudCoverGeoJson(cloudCoverDataset) : null),
     [cloudCoverDataset],
   )
+
+  useEffect(() => {
+    mapModeRef.current = mapMode
+  }, [mapMode])
+
+  useEffect(() => {
+    smoothCloudOpacityRef.current = smoothCloudOpacity
+  }, [smoothCloudOpacity])
+
+  useEffect(() => {
+    smoothCloudStateChangeRef.current = onSmoothCloudStateChange
+  }, [onSmoothCloudStateChange])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -187,6 +227,19 @@ export function WeatherMap({
         setCloudCoverLayerError('Cloud Cover could not be drawn. The basemap is still available.')
         return
       }
+      if (
+        'sourceId' in event &&
+        event.sourceId === SMOOTH_CLOUD_SOURCE_ID &&
+        mapModeRef.current === 'smooth-cloud'
+      ) {
+        smoothCloudStateChangeRef.current({
+          status: 'error',
+          message: SMOOTH_CLOUD_FAILURE_MESSAGE,
+          validTimeMs: smoothCloudValidTimeRef.current,
+          loadedAtMs: null,
+        })
+        return
+      }
       setMapError(event.error?.message ?? 'The basemap could not be loaded.')
     })
 
@@ -194,6 +247,18 @@ export function WeatherMap({
       if (event.sourceId === RADAR_SOURCE_ID && event.isSourceLoaded) setRadarTileError(null)
       if (event.sourceId === SATELLITE_SOURCE_ID && event.isSourceLoaded) setSatelliteImageError(null)
       if (event.sourceId === CLOUD_COVER_SOURCE_ID && event.isSourceLoaded) setCloudCoverLayerError(null)
+      if (
+        event.sourceId === SMOOTH_CLOUD_SOURCE_ID &&
+        event.isSourceLoaded &&
+        mapModeRef.current === 'smooth-cloud'
+      ) {
+        smoothCloudStateChangeRef.current({
+          status: 'ready',
+          message: null,
+          validTimeMs: smoothCloudValidTimeRef.current,
+          loadedAtMs: Date.now(),
+        })
+      }
     })
 
     mapRef.current = map
@@ -365,6 +430,133 @@ export function WeatherMap({
 
   useEffect(() => {
     const map = mapRef.current
+    if (!map || !isMapReady) return
+
+    const removeSmoothCloud = () => {
+      if (map.getLayer(SMOOTH_CLOUD_LAYER_ID)) map.removeLayer(SMOOTH_CLOUD_LAYER_ID)
+      if (map.getSource(SMOOTH_CLOUD_SOURCE_ID)) map.removeSource(SMOOTH_CLOUD_SOURCE_ID)
+    }
+
+    if (mapMode !== 'smooth-cloud') {
+      removeSmoothCloud()
+      return
+    }
+
+    let disposed = false
+    let updateBounds: (() => void) | null = null
+    let syncAvailability: (() => void) | null = null
+    const validTimeMs = getSmoothCloudValidTime()
+    smoothCloudValidTimeRef.current = validTimeMs
+    onSmoothCloudStateChange({
+      status: 'loading',
+      message: null,
+      validTimeMs,
+      loadedAtMs: null,
+    })
+
+    void import('@openmeteo/weather-map-layer')
+      .then((weatherMapLayer) => {
+        if (disposed) return
+        const {
+          domainOptions,
+          getDomainBoundary,
+          omProtocol,
+          updateCurrentBounds,
+        } = weatherMapLayer
+        const smoothCloudDomain = domainOptions.find(
+          (domain) => domain.value === SMOOTH_CLOUD_DOMAIN,
+        )
+        if (!smoothCloudDomain) {
+          throw new Error('The NOAA HRRR CONUS domain is unavailable.')
+        }
+        const smoothCloudBoundary = getDomainBoundary(smoothCloudDomain)
+        addProtocol('om', omProtocol)
+
+        updateBounds = () => {
+          const bounds = map.getBounds()
+          updateCurrentBounds([
+            bounds.getWest(),
+            bounds.getSouth(),
+            bounds.getEast(),
+            bounds.getNorth(),
+          ])
+        }
+
+        syncAvailability = () => {
+          const center = map.getCenter()
+          if (
+            !isPointInsideBoundary(
+              center.lng,
+              center.lat,
+              smoothCloudBoundary,
+            )
+          ) {
+            removeSmoothCloud()
+            onSmoothCloudStateChange({
+              status: 'unsupported',
+              message: SMOOTH_CLOUD_UNSUPPORTED_MESSAGE,
+              validTimeMs,
+              loadedAtMs: null,
+            })
+            return
+          }
+
+          updateBounds?.()
+          if (map.getSource(SMOOTH_CLOUD_SOURCE_ID)) return
+
+          onSmoothCloudStateChange({
+            status: 'loading',
+            message: null,
+            validTimeMs,
+            loadedAtMs: null,
+          })
+          map.addSource(SMOOTH_CLOUD_SOURCE_ID, {
+            type: 'raster',
+            url: SMOOTH_CLOUD_SOURCE_URL,
+            maxzoom: 12,
+            attribution: SMOOTH_CLOUD_ATTRIBUTION,
+          })
+          const firstSymbolLayer = map.getStyle().layers?.find(
+            (layer) => layer.type === 'symbol',
+          )?.id
+          map.addLayer(
+            {
+              id: SMOOTH_CLOUD_LAYER_ID,
+              type: 'raster',
+              source: SMOOTH_CLOUD_SOURCE_ID,
+              paint: {
+                'raster-opacity': smoothCloudOpacityRef.current,
+                'raster-fade-duration': 180,
+              },
+            },
+            firstSymbolLayer,
+          )
+        }
+
+        map.on('dataloading', updateBounds)
+        map.on('moveend', syncAvailability)
+        syncAvailability()
+      })
+      .catch(() => {
+        if (disposed) return
+        onSmoothCloudStateChange({
+          status: 'error',
+          message: SMOOTH_CLOUD_FAILURE_MESSAGE,
+          validTimeMs,
+          loadedAtMs: null,
+        })
+      })
+
+    return () => {
+      disposed = true
+      if (updateBounds) map.off('dataloading', updateBounds)
+      if (syncAvailability) map.off('moveend', syncAvailability)
+      removeSmoothCloud()
+    }
+  }, [isMapReady, mapMode, onSmoothCloudStateChange, smoothCloudRefreshKey])
+
+  useEffect(() => {
+    const map = mapRef.current
     if (map && isMapReady && map.getLayer(RADAR_LAYER_ID)) map.setPaintProperty(RADAR_LAYER_ID, 'raster-opacity', radarOpacity)
   }, [isMapReady, radarOpacity])
 
@@ -382,6 +574,17 @@ export function WeatherMap({
 
   useEffect(() => {
     const map = mapRef.current
+    if (map && isMapReady && map.getLayer(SMOOTH_CLOUD_LAYER_ID)) {
+      map.setPaintProperty(
+        SMOOTH_CLOUD_LAYER_ID,
+        'raster-opacity',
+        smoothCloudOpacity,
+      )
+    }
+  }, [isMapReady, smoothCloudOpacity])
+
+  useEffect(() => {
+    const map = mapRef.current
     if (!map || !userLocation) return
     const coordinates: [number, number] = [userLocation.longitude, userLocation.latitude]
     if (!locationMarkerRef.current) {
@@ -396,6 +599,7 @@ export function WeatherMap({
   }, [userLocation])
 
   const cloudCoverError = cloudCoverLayerError ?? cloudCoverNotice
+  const smoothCloudError = smoothCloudState.message
   return (
     <section
       ref={panelRef}
@@ -417,10 +621,12 @@ export function WeatherMap({
           {(mapMode === 'radar' || mapMode === 'both') && (radarTileError || radarNotice) && <div className="radar-notice" role="status">{radarTileError ?? radarNotice}</div>}
           {(mapMode === 'satellite' || mapMode === 'both') && (satelliteImageError || satelliteNotice) && <div className="radar-notice" role="status">{satelliteImageError ?? satelliteNotice}</div>}
           {mapMode === 'cloud-cover' && cloudCoverError && <div className="radar-notice" role="status">{cloudCoverError}</div>}
+          {mapMode === 'smooth-cloud' && smoothCloudError && <div className="radar-notice" role="status">{smoothCloudError}</div>}
         </div>
       )}
       {(mapMode === 'radar' || mapMode === 'both') && <RadarLegend palette={radarPalette} />}
       {mapMode === 'cloud-cover' && <CloudCoverLegend />}
+      {mapMode === 'smooth-cloud' && <SmoothCloudLegend />}
       {mapMode === 'cloud-cover' && cloudCoverSummary && (
         <div className="cloud-cover-summary">
           <span>{cloudCoverSummary.label}</span>
@@ -434,6 +640,9 @@ export function WeatherMap({
       )}
       {mapMode === 'cloud-cover' && cloudCoverDataset && (
         <div className="cloud-attribution"><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Cloud Cover © Open-Meteo</a></div>
+      )}
+      {mapMode === 'smooth-cloud' && (
+        <div className="cloud-attribution"><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Smooth Cloud data © Open-Meteo</a></div>
       )}
     </section>
   )

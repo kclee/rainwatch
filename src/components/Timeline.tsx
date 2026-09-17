@@ -5,6 +5,7 @@ import type {
   CloudStatus,
   MapMode,
   RadarFrame,
+  SmoothCloudState,
 } from '../types/weather'
 import { formatRelativeTime } from '../utils/radarTime'
 
@@ -23,6 +24,8 @@ interface TimelineProps {
   cloudCoverDataset: CloudCoverDataset | null
   cloudCoverOpacity: number
   cloudCoverStatus: CloudCoverStatus
+  smoothCloudOpacity: number
+  smoothCloudState: SmoothCloudState
   isPlaying: boolean
   mapMode: MapMode
   radarOpacity: number
@@ -31,6 +34,7 @@ interface TimelineProps {
   onChangeOpacity: (opacity: number) => void
   onChangeSatelliteOpacity: (opacity: number) => void
   onChangeCloudCoverOpacity: (opacity: number) => void
+  onChangeSmoothCloudOpacity: (opacity: number) => void
   onSelectFrame: (index: number) => void
   onTogglePlayback: () => void
 }
@@ -43,6 +47,8 @@ export function Timeline({
   cloudCoverDataset,
   cloudCoverOpacity,
   cloudCoverStatus,
+  smoothCloudOpacity,
+  smoothCloudState,
   isPlaying,
   mapMode,
   radarOpacity,
@@ -51,6 +57,7 @@ export function Timeline({
   onChangeOpacity,
   onChangeSatelliteOpacity,
   onChangeCloudCoverOpacity,
+  onChangeSmoothCloudOpacity,
   onSelectFrame,
   onTogglePlayback,
 }: TimelineProps) {
@@ -58,6 +65,7 @@ export function Timeline({
   const showRadar = mapMode === 'radar' || mapMode === 'both'
   const showSatellite = mapMode === 'satellite' || mapMode === 'both'
   const showCloudCover = mapMode === 'cloud-cover'
+  const showSmoothCloud = mapMode === 'smooth-cloud'
   if (showRadar && !selectedFrame && !showSatellite) return null
 
   const selectedDate = selectedFrame
@@ -75,6 +83,7 @@ export function Timeline({
   const opacityPercent = Math.round(radarOpacity * 100)
   const satelliteOpacityPercent = Math.round(satelliteOpacity * 100)
   const cloudCoverOpacityPercent = Math.round(cloudCoverOpacity * 100)
+  const smoothCloudOpacityPercent = Math.round(smoothCloudOpacity * 100)
   const satelliteDate =
     satelliteFrame?.timestampMs === null || satelliteFrame?.timestampMs === undefined
       ? null
@@ -95,6 +104,22 @@ export function Timeline({
     : cloudCoverStatus === 'loading'
       ? 'Cloud Cover · Loading…'
       : 'Cloud Cover · Time unavailable'
+  const smoothCloudValidDate = smoothCloudState.validTimeMs
+    ? new Date(smoothCloudState.validTimeMs)
+    : null
+  const smoothCloudLoadedDate = smoothCloudState.loadedAtMs
+    ? new Date(smoothCloudState.loadedAtMs)
+    : null
+  const smoothCloudLabel =
+    smoothCloudState.status === 'loading'
+      ? 'Smooth Cloud · Loading…'
+      : smoothCloudState.status === 'unsupported'
+        ? 'Smooth Cloud · Outside coverage'
+        : smoothCloudState.status === 'error'
+          ? 'Smooth Cloud · Unavailable'
+          : smoothCloudValidDate
+            ? 'HRRR forecast · Next hour'
+            : 'Smooth Cloud · Time unavailable'
 
   return (
     <section className="timeline" aria-label="Weather layer controls">
@@ -147,6 +172,27 @@ export function Timeline({
           <div className="opacity-control">
             <label htmlFor="cloud-cover-opacity">Cloud Cover opacity <output htmlFor="cloud-cover-opacity">{cloudCoverOpacityPercent}%</output></label>
             <input id="cloud-cover-opacity" type="range" min="0" max="1" step="0.05" value={cloudCoverOpacity} aria-valuetext={`${cloudCoverOpacityPercent}%`} onChange={(event) => onChangeCloudCoverOpacity(Number(event.target.value))} />
+          </div>
+        </div>
+      )}
+      {showSmoothCloud && (
+        <div className="cloud-controls smooth-cloud-controls">
+          <div className="timeline-time" aria-live="polite">
+            <strong>{smoothCloudLabel}</strong>
+            {smoothCloudValidDate && (
+              <time dateTime={smoothCloudValidDate.toISOString()}>
+                Valid · {frameTimeFormatter.format(smoothCloudValidDate)}
+              </time>
+            )}
+            <span>
+              {smoothCloudLoadedDate
+                ? `Loaded · ${formatRelativeTime(smoothCloudLoadedDate.getTime(), nowMs)}`
+                : 'Experimental · NOAA HRRR CONUS'}
+            </span>
+          </div>
+          <div className="opacity-control">
+            <label htmlFor="smooth-cloud-opacity">Smooth Cloud opacity <output htmlFor="smooth-cloud-opacity">{smoothCloudOpacityPercent}%</output></label>
+            <input id="smooth-cloud-opacity" type="range" min="0" max="1" step="0.05" value={smoothCloudOpacity} aria-valuetext={`${smoothCloudOpacityPercent}%`} onChange={(event) => onChangeSmoothCloudOpacity(Number(event.target.value))} />
           </div>
         </div>
       )}

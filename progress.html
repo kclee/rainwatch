@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2c deployed · Map-layer spike complete</span>
+      <span class="status">Version 0.2c3 · Smooth Cloud lab integrated</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Product review.</strong> Open-Meteo's official spatial layer removed the checkerboard and worked in the static PWA architecture, but its pre-1.0 stability, GPL-2.0 integration, higher transfer cost, and service-worker edge case make <strong>keep production unchanged for now</strong> the recommendation.</p>
+      <p><strong>Real-device evaluation.</strong> Compare sampled Cloud Cover and Smooth Cloud · Lab during normal use. Keep both while judging clarity against network/device cost, CONUS coverage, pre-1.0 maturity, and the unresolved GPL-2.0 licensing decision. Wind remains deferred.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.2c keeps the focused static architecture while separating observed NOAA Satellite imagery from model-derived Open-Meteo Cloud Cover. It has no backend, database, accounts, forecast AI, or native application.</p>
+        <p>Version 0.2c3 keeps the focused static architecture while adding an explicitly experimental smooth NOAA HRRR Cloud Cover view beside the existing sampled Open-Meteo grid. It has no backend, database, accounts, forecast AI, or native application.</p>
       </article>
 
       <article class="card">
@@ -116,6 +116,12 @@
           <li class="done">Smooth HRRR Cloud Cover at regional and whole-USA extents</li>
           <li class="done">Partial-range, mobile, and production-base-path measurements</li>
           <li class="done">Open-Meteo remains network-only in the PWA</li>
+          <li class="done">Smooth Cloud · Lab in the main five-mode selector</li>
+          <li class="done">Official HRRR CONUS cloud_cover field with linear interpolation</li>
+          <li class="done">Independent Smooth Cloud opacity, valid time, refresh, legend, and attribution</li>
+          <li class="done">Exact HRRR footprint check and unsupported-geography notice</li>
+          <li class="done">On-demand engine loading outside the PWA app-shell precache</li>
+          <li class="done">Graceful Smooth Cloud errors that preserve the basemap and other modes</li>
           <li class="done">Build, lint, and browser checks</li>
           <li class="done">Repository-derived GitHub Pages base path</li>
           <li class="done">Official GitHub Pages Actions workflow</li>
@@ -145,6 +151,7 @@
           <li><strong>Radar:</strong> RainViewer historical frames behind a provider interface</li>
           <li><strong>Satellite:</strong> observed NOAA/NESDIS merged GOES GeoColor imagery</li>
           <li><strong>Cloud Cover:</strong> Open-Meteo Best Match model percentages behind a provider interface</li>
+          <li><strong>Smooth Cloud lab:</strong> Open-Meteo Weather Map Layer 0.1.1, NOAA HRRR CONUS, and partial <code>.om</code> range reads</li>
           <li><strong>Location:</strong> browser Geolocation API with explicit user action</li>
           <li><strong>PWA:</strong> Vite PWA plugin and Workbox app-shell precache</li>
           <li><strong>Deployment:</strong> static GitHub Pages site at <code>/rainwatch/</code></li>
@@ -154,6 +161,13 @@
       <article class="card wide">
         <h2>Latest verification</h2>
         <ul>
+          <li>The integrated Smooth Cloud mode loaded the official NOAA HRRR CONUS <code>cloud_cover</code> field and kept MapLibre labels readable above the smooth raster.</li>
+          <li>The sampled Cloud Cover mode remained available and loaded a 47 percent map-center value during the same browser session.</li>
+          <li>Panning outside the official HRRR footprint removed the weather raster and displayed the continental-U.S. coverage notice; returning restored the layer.</li>
+          <li>Smooth Cloud opacity changed from 78 to 30 percent, and manual refresh returned to the ready state without console errors.</li>
+          <li>Radar, Satellite, and Radar + Satellite all loaded after the experiment with their existing controls and separate timestamps intact.</li>
+          <li>At 390 × 844, all five mode buttons and Smooth Cloud controls remained reachable; client and scroll width were both exactly 390 pixels.</li>
+          <li>Eleven automated checks, clean lint, and the production/PWA build passed. The experimental engine is lazy and excluded from the app-shell precache.</li>
           <li>The official <code>om://</code> MapLibre path rendered HRRR <code>cloud_cover</code> with linear interpolation and no checkerboard.</li>
           <li>A fresh regional view used 6 weather requests, four 64 KiB ranges, about 264 KiB, and became ready in 1.6 seconds.</li>
           <li>A fresh whole-USA view used 18 weather requests, sixteen 64 KiB ranges, about 1.0 MiB, and became ready in 2.4 seconds.</li>
@@ -217,7 +231,7 @@
     </section>
 
     <footer>
-      Latest experiment evidence: <a href="docs/journal/2026-09-17-open-meteo-map-spike.md">docs/journal/2026-09-17-open-meteo-map-spike.md</a>. Version 0.2c evidence: <a href="docs/journal/2026-09-14-0.2c.md">docs/journal/2026-09-14-0.2c.md</a>. Updated 2026-09-17.
+      Version 0.2c3 evidence: <a href="docs/journal/2026-09-17-0.2c3.md">docs/journal/2026-09-17-0.2c3.md</a>. Research spike: <a href="docs/journal/2026-09-17-open-meteo-map-spike.md">docs/journal/2026-09-17-open-meteo-map-spike.md</a>. Updated 2026-09-17.
     </footer>
   </main>
 </body>

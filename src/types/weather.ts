@@ -34,7 +34,26 @@ export interface RadarPalette {
   note: string
 }
 
-export type MapMode = 'radar' | 'satellite' | 'cloud-cover' | 'both'
+export type MapMode =
+  | 'radar'
+  | 'satellite'
+  | 'cloud-cover'
+  | 'smooth-cloud'
+  | 'both'
+
+export type SmoothCloudStatus =
+  | 'idle'
+  | 'loading'
+  | 'ready'
+  | 'unsupported'
+  | 'error'
+
+export interface SmoothCloudState {
+  status: SmoothCloudStatus
+  message: string | null
+  validTimeMs: number | null
+  loadedAtMs: number | null
+}
 
 export type CloudStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error'
 

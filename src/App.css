@@ -32,7 +32,7 @@ h1 {
 
 .map-mode-selector {
   display: inline-grid;
-  grid-template-columns: repeat(4, auto);
+  grid-template-columns: repeat(5, auto);
   margin-top: 0.65rem;
   padding: 0.2rem;
   border: 1px solid rgba(125, 211, 252, 0.35);
@@ -231,6 +231,64 @@ h1 {
 }
 
 .cloud-cover-legend > small {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  line-height: 1.25;
+}
+
+.smooth-cloud-legend {
+  position: absolute;
+  z-index: 2;
+  bottom: 2.75rem;
+  left: 1rem;
+  width: min(22rem, calc(100% - 5rem));
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 0.65rem;
+  color: #0f172a;
+  background: rgba(248, 250, 252, 0.92);
+  box-shadow: 0 0.35rem 1rem rgba(2, 6, 23, 0.2);
+  backdrop-filter: blur(0.25rem);
+  pointer-events: none;
+}
+
+.smooth-cloud-legend p {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.smooth-cloud-legend p span,
+.smooth-cloud-legend small {
+  color: #475569;
+  font-weight: 600;
+}
+
+.smooth-cloud-legend__bar {
+  height: 0.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(244, 247, 250, 0.4),
+    rgba(209, 213, 219, 0.63),
+    rgba(138, 147, 162, 0.85),
+    rgba(104, 115, 133, 0.93)
+  );
+}
+
+.smooth-cloud-legend__scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.2rem;
+  color: #334155;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.smooth-cloud-legend small {
   display: block;
   margin-top: 0.35rem;
   font-size: 0.62rem;
@@ -558,6 +616,10 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .map-mode-selector button:last-child {
+    grid-column: 1 / -1;
+  }
+
   .radar-refresh-controls {
     grid-column: 1 / -1;
     width: 100%;
@@ -612,6 +674,17 @@ h1 {
     left: 0.65rem;
     max-width: calc(100% - 4.5rem);
     padding: 0.45rem 0.55rem;
+  }
+
+  .smooth-cloud-legend {
+    bottom: 5rem;
+    left: 0.65rem;
+    width: calc(100% - 4.5rem);
+    padding: 0.45rem 0.55rem;
+  }
+
+  .smooth-cloud-legend small {
+    display: none;
   }
 
   .cloud-cover-legend__scale {

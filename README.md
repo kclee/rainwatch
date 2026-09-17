@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is built incrementally as a static client-side web app. Version 0.2c adds model-derived Total Cloud Cover while preserving RainViewer radar and NOAA GOES satellite imagery as separate weather concepts.
+The application is built incrementally as a static client-side web app. Version 0.2c3 adds an experimental smooth Cloud Cover trial while preserving the sampled model grid, RainViewer radar, and NOAA GOES satellite imagery as separate weather concepts.
 
 ## Built through human-AI collaboration
 
@@ -13,6 +13,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-17-0.2c3.md`](docs/journal/2026-09-17-0.2c3.md) records the integrated Smooth Cloud usability trial and its verification.
 - [`docs/journal/2026-09-17-open-meteo-map-spike.md`](docs/journal/2026-09-17-open-meteo-map-spike.md) evaluates Open-Meteo's official spatial Weather Map Layer without changing production Cloud Cover.
 - [`docs/journal/2026-09-14-cloud-density-experiment.md`](docs/journal/2026-09-14-cloud-density-experiment.md) records the 7 × 7 through 21 × 21 Cloud Cover density evaluation.
 - [`docs/journal/2026-09-14-0.2c.md`](docs/journal/2026-09-14-0.2c.md) records the model Cloud Cover milestone and its verification.
@@ -22,11 +23,11 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2c (`0.2.0-beta.2`) is implemented. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Cloud Cover displays Open-Meteo's current model-derived total cloud fraction as an interpretive percentage grid. Radar + Satellite preserves the former Both behavior and does not add Cloud Cover to the stack.
+RainWatch 0.2c3 (`0.2.0-beta.3`) is implemented. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Cloud Cover displays Open-Meteo's current model-derived total cloud fraction as an interpretive percentage grid. Smooth Cloud · Lab renders the official Open-Meteo spatial field for usability evaluation. Radar + Satellite preserves the former combined behavior and does not add either Cloud Cover mode to the stack.
 
 A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
 
-A later research-only spike confirmed that Open-Meteo's official Weather Map Layer can render smooth HRRR `cloud_cover` directly in MapLibre through partial `.om` file reads. It is visually much clearer, but the package is pre-1.0 and explicitly not production-ready, requires a GPL-2.0 licensing decision, and used about 264 KiB regionally and 1.0 MiB nationally in the measured runs. Recommendation C is to keep production unchanged for now. The removable experiment is available at [`public/experiments/open-meteo-cloud-map.html`](public/experiments/open-meteo-cloud-map.html).
+A later research spike confirmed that Open-Meteo's official Weather Map Layer can render smooth HRRR `cloud_cover` directly in MapLibre through partial `.om` file reads. Version 0.2c3 integrates that path as a removable, non-default lab mode. It is visually much clearer, but the package is pre-1.0, requires a GPL-2.0 licensing decision, is limited to the HRRR continental-U.S. footprint, and used about 264 KiB regionally and 1.0 MiB nationally in the measured runs. The sampled Cloud Cover mode remains the lighter global option. The original standalone experiment remains at [`public/experiments/open-meteo-cloud-map.html`](public/experiments/open-meteo-cloud-map.html).
 
 ## Prerequisites
 
@@ -104,6 +105,7 @@ RainWatch uses:
 - RainViewer as the first radar-data provider
 - NOAA/NESDIS `Most_Recent_MERGEDGC` as the cloud/satellite provider
 - Open-Meteo Best Match forecast models as the Total Cloud Cover provider
+- Open-Meteo Weather Map Layer 0.1.1 with NOAA HRRR CONUS as the experimental smooth Cloud Cover provider
 
 External radar integration will live behind a small provider abstraction under `src/services/radar/`. UI components will consume provider-neutral radar frame data instead of constructing RainViewer URLs directly.
 
@@ -117,11 +119,13 @@ Cloud Cover uses a 5 × 5 grid below zoom 5 and a 7 × 7 grid at regional/local 
 
 For the documented density experiment only, `?cloudGrid=7`, `11`, `15`, or `21` fixes the grid dimensions for that page load. Unsupported values are ignored. This is a developer test mechanism, not a permanent user setting.
 
+Smooth Cloud · Lab dynamically loads `@openmeteo/weather-map-layer` 0.1.1 only when selected. It registers the official `om://` MapLibre protocol and requests the NOAA HRRR CONUS `cloud_cover` field for the next valid hour with linear interpolation and color blending. The official model footprint controls availability; outside that footprint RainWatch removes the raster and explains the continental-U.S. limitation. The mode has independent opacity, refresh, valid-time, loading, error, legend, and attribution UI. Its engine and WebAssembly reader are excluded from the PWA app-shell precache, and live Open-Meteo metadata and `.om` ranges remain network-only.
+
 The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
 
 MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
 
-No backend server, database, authentication system, or API key is required for version 0.2c.
+No backend server, database, authentication system, or API key is required for version 0.2c3.
 
 ## Known limitations
 
@@ -140,16 +144,20 @@ No backend server, database, authentication system, or API key is required for v
 - Cloud Cover is shown as soft sampled cells. The 0–19, 20–49, 50–79, and 80–100 percent labels are RainWatch interpretation categories, not provider-defined meteorological thresholds.
 - Cloud Cover is marked delayed when its represented model time is at least 45 minutes old. Underlying model runs update on provider/model-specific schedules, commonly every one to six hours.
 - A typical Cloud Cover request contains 25 or 49 coordinates in one HTTP request. Browser measurements were approximately 8 KB and 16 KB respectively, excluding the basemap.
+- Smooth Cloud · Lab is limited to the NOAA HRRR CONUS footprint. It is not a global replacement; sampled Cloud Cover remains available elsewhere.
+- Smooth Cloud is a next-hour HRRR forecast field, not direct satellite observation. Its valid time and load time are separate from sampled Cloud Cover, Satellite, and Radar timestamps.
+- The experimental mode is materially heavier. Research measurements were about 264 KiB regionally and 1.0 MiB for a fresh whole-USA weather view, plus a one-time lazy engine/WebAssembly download.
+- `@openmeteo/weather-map-layer` is pinned to the pre-1.0 version 0.1.1 and currently declares GPL-2.0. Its long-term product and licensing suitability has not been decided. Required Open-Meteo attribution remains visible.
 - NOAA's latest merged image normally advances about every ten minutes. RainWatch warns when the image timestamp is at least 35 minutes old, allowing for slower scans and ordinary publication delay.
 - Radar and satellite observations have separate timestamps and are not synchronized.
 - Cloud imagery is a single latest image in 0.2b; cloud history and cloud animation are intentionally deferred.
 - The NOAA service extends to approximately 76° north and south; polar areas and views crossing the antimeridian are not a focus of this milestone.
 - Map and radar imagery require internet access even though the application has no backend.
-- Offline support is deliberately limited to the application shell. Live NOAA imagery, Open-Meteo Cloud Cover, RainViewer metadata and radar imagery, OpenFreeMap tiles, and geolocation are not cached by RainWatch.
+- Offline support is deliberately limited to the application shell. Live NOAA imagery, both Open-Meteo Cloud Cover sources, RainViewer metadata and radar imagery, OpenFreeMap tiles, and geolocation are not cached by RainWatch. The experimental Smooth Cloud engine is also loaded only on demand.
 - iOS does not show a universal automatic install prompt; installation uses Safari's **Add to Home Screen** action.
 - Browser geolocation normally requires localhost or HTTPS and still needs a manual permission-granted acceptance check.
 - Vite reports a bundle-size advisory because MapLibre and its worker are substantial browser dependencies.
 
 ## Next milestone
 
-Pause for product review. The official map-layer spike identifies a much better visual path but recommends keeping production unchanged until upstream stability, licensing, dependency bundling, a non-CONUS fallback, and real-device performance are explicitly addressed. Accessibility and real-device validation remain sensible alternatives.
+Pause for real-device use and product review. Compare Cloud Cover and Smooth Cloud · Lab without removing either. A future decision should consider visual value against network/device cost, the CONUS-only footprint, upstream maturity, and GPL-2.0 compatibility. Wind remains deferred until explicitly requested.
