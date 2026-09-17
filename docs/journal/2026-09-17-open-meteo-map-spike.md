@@ -100,6 +100,7 @@ Tiles appeared progressively as range reads completed. Normal pans and zooms sta
 
 - The production Vite build passed and copied the standalone page to `dist/experiments/open-meteo-cloud-map.html`.
 - The page worked at the production-style `/rainwatch/experiments/open-meteo-cloud-map.html` base path.
+- GitHub Pages workflow [run 35266196309](https://github.com/kclee/rainwatch/actions/runs/35266196309) deployed experiment commit `75d52b9` successfully. The live HTTPS experiment is <https://kclee.github.io/rainwatch/experiments/open-meteo-cloud-map.html>.
 - Open-Meteo S3, UNPKG, and OpenFreeMap all accepted browser requests with CORS; no API key, backend proxy, database, or special hosting was required.
 - The generated service worker precaches the experiment HTML because HTML is part of the existing app-shell glob. External scripts and live `.om` data are not added to a persistent weather-data cache.
 - A browser still controlled by the previous service worker returned the main RainWatch shell on the first direct experimental-page navigation. After the worker updated, one reload served the experiment correctly. A production migration should avoid a standalone navigation outside the app router or explicitly exclude such routes from the app-shell navigation fallback.
@@ -142,4 +143,5 @@ Production React components, the current Open-Meteo forecast provider, Cloud Cov
 - Desktop regional and whole-USA browser checks passed.
 - 390 × 844 regional and whole-USA browser checks passed.
 - Production `/rainwatch/` base-path check passed after the service-worker update behavior described above.
+- The deployed HTTPS page loaded live HRRR Cloud Cover with six weather requests, four partial reads, about 264 KiB, and no browser warnings or errors after the existing service worker updated and the page was reloaded once.
 - No real device location was requested or transmitted.
