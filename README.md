@@ -24,7 +24,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2d (`0.2.0-beta.4`) is implemented. A compact Wind card displays current Open-Meteo Best Match 10 m surface-wind speed, meteorological source direction, movement direction, gusts, model time, checked time, and freshness for either the relevant user location or map center. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Both Cloud Cover modes remain available without becoming core to the Wind milestone.
+RainWatch 0.2d (`0.2.0-beta.4`) is implemented and deployed. A compact Wind card displays current Open-Meteo Best Match 10 m surface-wind speed, meteorological source direction, movement direction, gusts, model time, checked time, and freshness for either the relevant user location or map center. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Both Cloud Cover modes remain available without becoming core to the Wind milestone.
 
 A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
 

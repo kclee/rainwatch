@@ -54,7 +54,7 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2d · Current surface wind implemented</span>
+      <span class="status">Version 0.2d deployed · Current surface wind active</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
@@ -176,6 +176,9 @@
           <li>At 390 × 844, the Wind card and its 44-pixel refresh control remained usable with no horizontal overflow.</li>
           <li>Wind and the mobile Cloud Cover summary occupied separate positions without overlap.</li>
           <li>Nineteen automated checks, lint, and production/PWA build passed with no browser console warnings or errors.</li>
+          <li>GitHub Pages run 35280936089 deployed implementation commit <code>9aeb5fa</code> successfully.</li>
+          <li>The public PWA activated 0.2d after one normal service-worker update reload, then loaded live Wind without browser warnings or errors.</li>
+          <li>The deployed 390 × 844 test browser had matching client and scroll widths with no horizontal overflow.</li>
           <li>The integrated Smooth Cloud mode loaded the official NOAA HRRR CONUS <code>cloud_cover</code> field and kept MapLibre labels readable above the smooth raster.</li>
           <li>The sampled Cloud Cover mode remained available and loaded a 47 percent map-center value during the same browser session.</li>
           <li>Panning outside the official HRRR footprint removed the weather raster and displayed the continental-U.S. coverage notice; returning restored the layer.</li>
