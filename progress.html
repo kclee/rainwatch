@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2c deployed · Density experiment complete</span>
+      <span class="status">Version 0.2c deployed · Map-layer spike complete</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Product review.</strong> The density experiment found 15 × 15 to be the best cell-based compromise, but sampling alone did not remove the checkerboard effect. Interpolation or smoothing is recommended only if separately authorized.</p>
+      <p><strong>Product review.</strong> Open-Meteo's official spatial layer removed the checkerboard and worked in the static PWA architecture, but its pre-1.0 stability, GPL-2.0 integration, higher transfer cost, and service-worker edge case make <strong>keep production unchanged for now</strong> the recommendation.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -112,6 +112,9 @@
           <li class="done">Independent Cloud Cover opacity and 45-minute freshness</li>
           <li class="done">Meaningful-move threshold and ten-minute memory reuse</li>
           <li class="done">7 × 7 through 21 × 21 Cloud Cover density comparison</li>
+          <li class="done">Isolated Open-Meteo Weather Map Layer research spike</li>
+          <li class="done">Smooth HRRR Cloud Cover at regional and whole-USA extents</li>
+          <li class="done">Partial-range, mobile, and production-base-path measurements</li>
           <li class="done">Open-Meteo remains network-only in the PWA</li>
           <li class="done">Build, lint, and browser checks</li>
           <li class="done">Repository-derived GitHub Pages base path</li>
@@ -151,6 +154,14 @@
       <article class="card wide">
         <h2>Latest verification</h2>
         <ul>
+          <li>The official <code>om://</code> MapLibre path rendered HRRR <code>cloud_cover</code> with linear interpolation and no checkerboard.</li>
+          <li>A fresh regional view used 6 weather requests, four 64 KiB ranges, about 264 KiB, and became ready in 1.6 seconds.</li>
+          <li>A fresh whole-USA view used 18 weather requests, sixteen 64 KiB ranges, about 1.0 MiB, and became ready in 2.4 seconds.</li>
+          <li>A one-level local zoom added no weather transfer; a larger pan added one 64 KiB range; returning reused the loaded range.</li>
+          <li>No HTTP 429 occurred during normal interaction. The raw S3 spatial path is separate from the forecast API used by production.</li>
+          <li>Desktop and 390 × 844 layouts remained responsive, labels stayed above the raster, and opacity required no refetch.</li>
+          <li>The production build copied the experiment under <code>/rainwatch/experiments/</code>; an older service worker required one update/reload before serving that standalone path.</li>
+          <li>Upstream still marks the GPL-2.0, pre-1.0 map-layer package as not fully production-ready, so production Cloud Cover remains unchanged.</li>
           <li>The density experiment kept one Open-Meteo request for 49, 121, 225, and 441 samples.</li>
           <li>Regional responses measured approximately 15.7, 38.7, 72.2, and 141.5 KiB respectively.</li>
           <li>Literal coordinate commas kept the 21 × 21 URL below the practical request-size limit; the percent-encoded 9.8 KB diagnostic URL returned HTTP 414.</li>
@@ -205,7 +216,7 @@
     </section>
 
     <footer>
-      Latest experiment evidence: <a href="docs/journal/2026-09-14-cloud-density-experiment.md">docs/journal/2026-09-14-cloud-density-experiment.md</a>. Version 0.2c evidence: <a href="docs/journal/2026-09-14-0.2c.md">docs/journal/2026-09-14-0.2c.md</a>. Updated 2026-09-14.
+      Latest experiment evidence: <a href="docs/journal/2026-09-17-open-meteo-map-spike.md">docs/journal/2026-09-17-open-meteo-map-spike.md</a>. Version 0.2c evidence: <a href="docs/journal/2026-09-14-0.2c.md">docs/journal/2026-09-14-0.2c.md</a>. Updated 2026-09-17.
     </footer>
   </main>
 </body>

@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07111f" />
+    <title>RainWatch · Open-Meteo cloud map spike</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.10.0/dist/maplibre-gl.css" />
+    <script>
+      (() => {
+        const requests = [];
+        const nativeFetch = window.fetch.bind(window);
+
+        window.fetch = async (...args) => {
+          const request = new Request(...args);
+          const startedAt = performance.now();
+          try {
+            const response = await nativeFetch(...args);
+            requests.push({
+              url: request.url,
+              method: request.method,
+              status: response.status,
+              range: request.headers.get('range'),
+              contentRange: response.headers.get('content-range'),
+              contentLength: Number(response.headers.get('content-length')) || 0,
+              durationMs: Math.round(performance.now() - startedAt),
+            });
+            return response;
+          } catch (error) {
+            requests.push({
+              url: request.url,
+              method: request.method,
+              status: 0,
+              range: request.headers.get('range'),
+              contentRange: null,
+              contentLength: 0,
+              durationMs: Math.round(performance.now() - startedAt),
+              error: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
+          }
+        };
+
+        window.__rainwatchCloudMapSpike = {
+          startedAt: performance.now(),
+          firstCloudRenderMs: null,
+          requests,
+          weatherRequests() {
+            return requests.filter((request) =>
+              request.url.includes('openmeteo.s3.amazonaws.com/data_spatial/'),
+            );
+          },
+        };
+      })();
+    </script>
+    <script src="https://unpkg.com/@openmeteo/weather-map-layer@0.1.1/dist/index.js"></script>
+    <style>
+      :root {
+        color: #f7fbff;
+        background: #07111f;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body { overflow: hidden; }
+
+      .shell {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        height: 100%;
+        background: #07111f;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 82px;
+        padding: 12px 18px;
+        border-bottom: 1px solid #1c3953;
+      }
+
+      .eyebrow {
+        margin: 0 0 2px;
+        color: #44c7f4;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 2rem); line-height: 1; }
+      .subtitle { margin: 5px 0 0; color: #abc0d2; font-size: 0.78rem; }
+
+      .status {
+        max-width: 300px;
+        padding: 8px 12px;
+        border: 1px solid #2d5876;
+        border-radius: 999px;
+        color: #c8d8e6;
+        background: #0b2133;
+        font-size: 0.75rem;
+        text-align: center;
+      }
+
+      .status[data-state="ready"] { color: #d8f7e8; border-color: #2b8063; background: #0b3028; }
+      .status[data-state="error"] { color: #ffd7d7; border-color: #a94e55; background: #3c171d; }
+
+      .map-wrap { position: relative; min-height: 0; }
+      #map { width: 100%; height: 100%; }
+
+      .panel {
+        position: absolute;
+        z-index: 2;
+        left: 14px;
+        top: 14px;
+        width: min(310px, calc(100% - 28px));
+        padding: 12px;
+        border: 1px solid rgba(95, 131, 156, 0.55);
+        border-radius: 12px;
+        color: #172433;
+        background: rgba(251, 253, 255, 0.94);
+        box-shadow: 0 6px 22px rgba(3, 15, 28, 0.22);
+        backdrop-filter: blur(8px);
+      }
+
+      .panel strong { font-size: 0.82rem; }
+      .panel p { margin: 4px 0 10px; color: #46576a; font-size: 0.72rem; line-height: 1.35; }
+
+      .buttons { display: flex; gap: 7px; margin-bottom: 10px; }
+      button {
+        min-height: 34px;
+        padding: 6px 10px;
+        border: 1px solid #87a8bf;
+        border-radius: 8px;
+        color: #173b55;
+        background: #eef7fd;
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 750;
+        cursor: pointer;
+      }
+      button:hover { background: #dff2fd; }
+
+      label { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; font-size: 0.72rem; font-weight: 700; }
+      input[type="range"] { width: 100%; accent-color: #087aaf; }
+
+      .legend {
+        position: absolute;
+        z-index: 2;
+        left: 14px;
+        bottom: 26px;
+        width: min(410px, calc(100% - 28px));
+        padding: 10px 12px;
+        border: 1px solid rgba(95, 131, 156, 0.55);
+        border-radius: 10px;
+        color: #172433;
+        background: rgba(251, 253, 255, 0.94);
+        box-shadow: 0 5px 18px rgba(3, 15, 28, 0.18);
+      }
+
+      .legend-title { display: flex; justify-content: space-between; gap: 8px; font-size: 0.72rem; font-weight: 800; }
+      .legend-bar {
+        height: 12px;
+        margin: 7px 0 4px;
+        border: 1px solid #a9b4c0;
+        border-radius: 999px;
+        background: linear-gradient(90deg,
+          rgba(255,255,255,0), rgba(249,251,253,.14), rgba(244,247,250,.4),
+          rgba(233,239,244,.48), rgba(220,226,233,.55), rgba(209,213,219,.63),
+          rgba(188,193,202,.7), rgba(166,173,184,.78), rgba(138,147,162,.85),
+          rgba(104,115,133,.93));
+      }
+      .legend-scale { display: flex; justify-content: space-between; color: #4d5e70; font-size: 0.66rem; }
+
+      .metrics {
+        position: absolute;
+        z-index: 2;
+        right: 46px;
+        bottom: 26px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        color: #cbe7f7;
+        background: rgba(7, 17, 31, 0.88);
+        font: 0.66rem/1.35 ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+
+      @media (max-width: 600px) {
+        header { min-height: 92px; padding: 10px 12px; align-items: flex-start; }
+        .subtitle { max-width: 210px; }
+        .status { max-width: 135px; padding: 6px 8px; font-size: 0.67rem; }
+        .panel { left: 8px; top: 8px; width: calc(100% - 54px); }
+        .legend { left: 8px; bottom: 18px; width: calc(100% - 16px); }
+        .metrics { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div>
+          <p class="eyebrow">RainWatch research spike</p>
+          <h1>Open-Meteo cloud map</h1>
+          <p class="subtitle">Experimental spatial rendering · not the production Cloud Cover layer</p>
+        </div>
+        <div class="status" id="status" role="status">Loading official map layer…</div>
+      </header>
+      <section class="map-wrap" aria-label="Experimental cloud cover map">
+        <div id="map"></div>
+        <div class="panel">
+          <strong>Smooth model cloud cover</strong>
+          <p>NOAA HRRR CONUS model · current hour · linear interpolation in the browser</p>
+          <div class="buttons">
+            <button id="local-view" type="button">Regional view</button>
+            <button id="usa-view" type="button">Whole USA</button>
+          </div>
+          <label>
+            <span>Opacity</span>
+            <input id="opacity" type="range" min="0" max="100" value="78" />
+            <span id="opacity-value">78%</span>
+          </label>
+        </div>
+        <div class="legend" aria-label="Cloud cover percentage legend">
+          <div class="legend-title"><span>Total cloud cover</span><span>model-derived</span></div>
+          <div class="legend-bar"></div>
+          <div class="legend-scale"><span>0% clear</span><span>50%</span><span>100% overcast</span></div>
+        </div>
+        <div class="metrics" id="metrics">weather data: waiting…</div>
+      </section>
+    </main>
+
+    <script type="module">
+      import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.10.0/dist/maplibre-gl.mjs';
+
+      const sourceId = 'open-meteo-cloud-cover';
+      const layerId = 'open-meteo-cloud-cover-layer';
+      const status = document.querySelector('#status');
+      const metrics = document.querySelector('#metrics');
+      const opacity = document.querySelector('#opacity');
+      const opacityValue = document.querySelector('#opacity-value');
+      const spike = window.__rainwatchCloudMapSpike;
+
+      maplibregl.addProtocol('om', window.OMWeatherMapLayer.omProtocol);
+
+      const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+        center: [-98.5795, 39.8283],
+        zoom: 4.15,
+        hash: true,
+        attributionControl: false,
+      });
+
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+      map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+      const updateBounds = () => {
+        const bounds = map.getBounds();
+        const [minLng, minLat] = bounds.getSouthWest().toArray();
+        const [maxLng, maxLat] = bounds.getNorthEast().toArray();
+        window.OMWeatherMapLayer.updateCurrentBounds([minLng, minLat, maxLng, maxLat]);
+      };
+
+      map.on('dataloading', updateBounds);
+
+      map.on('load', () => {
+        updateBounds();
+        const omUrl = 'https://openmeteo.s3.amazonaws.com/data_spatial/ncep_hrrr_conus/latest.json?time_step=current_time_1H&variable=cloud_cover&interpolation=linear&color_blend=true';
+
+        map.addSource(sourceId, {
+          type: 'raster',
+          url: `om://${omUrl}`,
+          maxzoom: 12,
+        });
+
+        const firstLabel = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id;
+        map.addLayer({
+          id: layerId,
+          type: 'raster',
+          source: sourceId,
+          paint: {
+            'raster-opacity': 0.78,
+            'raster-fade-duration': 180,
+          },
+        }, firstLabel);
+      });
+
+      map.on('sourcedata', (event) => {
+        if (event.sourceId !== sourceId || !event.isSourceLoaded || spike.firstCloudRenderMs !== null) return;
+        spike.firstCloudRenderMs = Math.round(performance.now() - spike.startedAt);
+        status.textContent = `Cloud layer ready in ${(spike.firstCloudRenderMs / 1000).toFixed(1)} s`;
+        status.dataset.state = 'ready';
+      });
+
+      map.on('error', (event) => {
+        const message = event.error?.message ?? 'Unknown map error';
+        if (!message.toLowerCase().includes('open-meteo') && !message.toLowerCase().includes('om file')) return;
+        status.textContent = 'Cloud layer could not load';
+        status.dataset.state = 'error';
+      });
+
+      opacity.addEventListener('input', () => {
+        const value = Number(opacity.value);
+        opacityValue.textContent = `${value}%`;
+        if (map.getLayer(layerId)) map.setPaintProperty(layerId, 'raster-opacity', value / 100);
+      });
+
+      document.querySelector('#local-view').addEventListener('click', () => {
+        map.easeTo({ center: [-98.5795, 39.8283], zoom: 8.4, duration: 900 });
+      });
+
+      document.querySelector('#usa-view').addEventListener('click', () => {
+        map.fitBounds([[-125, 24], [-66.5, 50]], { padding: 28, duration: 900 });
+      });
+
+      const refreshMetrics = () => {
+        const weather = spike.weatherRequests();
+        const bytes = weather.reduce(
+          (total, request) => total + (request.method === 'HEAD' ? 0 : request.contentLength),
+          0,
+        );
+        const partials = weather.filter((request) => request.status === 206).length;
+        const size = bytes >= 1024 * 1024
+          ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+          : `${(bytes / 1024).toFixed(0)} KB`;
+        metrics.textContent = `weather data: ${weather.length} requests · ${partials} partial · ${size}`;
+        metrics.dataset.weatherRequests = JSON.stringify(weather);
+      };
+
+      window.setInterval(refreshMetrics, 500);
+    </script>
+  </body>
+</html>

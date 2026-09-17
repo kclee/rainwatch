@@ -13,6 +13,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-17-open-meteo-map-spike.md`](docs/journal/2026-09-17-open-meteo-map-spike.md) evaluates Open-Meteo's official spatial Weather Map Layer without changing production Cloud Cover.
 - [`docs/journal/2026-09-14-cloud-density-experiment.md`](docs/journal/2026-09-14-cloud-density-experiment.md) records the 7 × 7 through 21 × 21 Cloud Cover density evaluation.
 - [`docs/journal/2026-09-14-0.2c.md`](docs/journal/2026-09-14-0.2c.md) records the model Cloud Cover milestone and its verification.
 - [`docs/journal/2026-09-12-0.2b.md`](docs/journal/2026-09-12-0.2b.md) records the satellite milestone and its verification.
@@ -24,6 +25,8 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 RainWatch 0.2c (`0.2.0-beta.2`) is implemented. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Cloud Cover displays Open-Meteo's current model-derived total cloud fraction as an interpretive percentage grid. Radar + Satellite preserves the former Both behavior and does not add Cloud Cover to the stack.
 
 A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
+
+A later research-only spike confirmed that Open-Meteo's official Weather Map Layer can render smooth HRRR `cloud_cover` directly in MapLibre through partial `.om` file reads. It is visually much clearer, but the package is pre-1.0 and explicitly not production-ready, requires a GPL-2.0 licensing decision, and used about 264 KiB regionally and 1.0 MiB nationally in the measured runs. Recommendation C is to keep production unchanged for now. The removable experiment is available at [`public/experiments/open-meteo-cloud-map.html`](public/experiments/open-meteo-cloud-map.html).
 
 ## Prerequisites
 
@@ -149,4 +152,4 @@ No backend server, database, authentication system, or API key is required for v
 
 ## Next milestone
 
-Pause for product review. The density experiment recommends evaluating interpolation or smoothing next if improving Cloud Cover is the priority, but that work has not started. Accessibility and real-device validation remain sensible alternatives.
+Pause for product review. The official map-layer spike identifies a much better visual path but recommends keeping production unchanged until upstream stability, licensing, dependency bundling, a non-CONUS fallback, and real-device performance are explicitly addressed. Accessibility and real-device validation remain sensible alternatives.
