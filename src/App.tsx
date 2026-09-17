@@ -3,6 +3,7 @@ import './App.css'
 import { MapModeSelector } from './components/MapModeSelector'
 import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
+import { WindCard } from './components/WindCard'
 import { DEFAULT_CLOUD_OPACITY } from './config/cloud'
 import {
   DEFAULT_CLOUD_COVER_OPACITY,
@@ -18,7 +19,12 @@ import { useCloudCover } from './hooks/useCloudCover'
 import { useCloudImagery } from './hooks/useCloudImagery'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useRadarFrames } from './hooks/useRadarFrames'
-import type { MapMode, SmoothCloudState } from './types/weather'
+import { useWind } from './hooks/useWind'
+import type {
+  CloudCoverViewport,
+  MapMode,
+  SmoothCloudState,
+} from './types/weather'
 import { selectCloudCoverSummary } from './utils/cloudCoverGrid'
 import { getCloudCoverFreshness } from './utils/cloudCoverTime'
 import { getCloudFreshness } from './utils/cloudTime'
@@ -26,6 +32,7 @@ import {
   formatMetadataRefreshTime,
   getRadarFreshness,
 } from './utils/radarTime'
+import { selectWindTarget } from './utils/wind'
 
 function App() {
   const { location, message, requestLocation, status } = useGeolocation()
@@ -40,6 +47,12 @@ function App() {
   )
   const satellite = useCloudImagery(showSatellite)
   const cloudCover = useCloudCover(showCloudCover, cloudCoverGridSizeOverride)
+  const [mapViewport, setMapViewport] = useState<CloudCoverViewport | null>(null)
+  const windTarget = useMemo(
+    () => (mapViewport ? selectWindTarget(mapViewport, location) : null),
+    [location, mapViewport],
+  )
+  const wind = useWind(windTarget)
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [radarOpacity, setRadarOpacity] = useState(DEFAULT_RADAR_OPACITY)
@@ -264,6 +277,7 @@ function App() {
         cloudCoverSummary={cloudCoverSummary}
         loadCloudCoverViewport={cloudCover.loadViewport}
         mapMode={mapMode}
+        onMapViewportChange={setMapViewport}
         onSmoothCloudStateChange={setSmoothCloudState}
         radarFrame={selectedFrame}
         radarPalette={radar.palette}
@@ -276,6 +290,17 @@ function App() {
         smoothCloudRefreshKey={smoothCloudRefreshKey}
         smoothCloudState={smoothCloudState}
         userLocation={location}
+        windCard={(
+          <WindCard
+            isRefreshing={wind.isRefreshing}
+            message={wind.message}
+            nowMs={nowMs}
+            onRefresh={() => void wind.refreshWind()}
+            reading={wind.reading}
+            refreshError={wind.refreshError}
+            status={wind.status}
+          />
+        )}
       />
       <Timeline
         cloudCoverDataset={cloudCover.dataset}

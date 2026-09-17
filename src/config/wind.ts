@@ -1,0 +1,5 @@
+export const WIND_CACHE_TTL_MS = 10 * 60 * 1000
+export const WIND_REQUEST_TIMEOUT_MS = 10 * 1000
+export const WIND_STALE_THRESHOLD_MS = 45 * 60 * 1000
+export const WIND_LOCATION_CHANGE_THRESHOLD_KM = 25
+

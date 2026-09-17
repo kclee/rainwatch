@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   addProtocol,
   AttributionControl,
@@ -74,6 +75,7 @@ interface WeatherMapProps {
   cloudCoverSummary: CloudCoverSummary | null
   loadCloudCoverViewport: (viewport: CloudCoverViewport) => Promise<void>
   mapMode: MapMode
+  onMapViewportChange: (viewport: CloudCoverViewport) => void
   onSmoothCloudStateChange: (state: SmoothCloudState) => void
   radarFrame: RadarFrame | null
   radarPalette: RadarPalette
@@ -83,6 +85,7 @@ interface WeatherMapProps {
   smoothCloudRefreshKey: number
   smoothCloudState: SmoothCloudState
   userLocation: UserLocation | null
+  windCard: ReactNode
 }
 
 function cloudCoverGeoJson(dataset: CloudCoverDataset) {
@@ -150,6 +153,7 @@ export function WeatherMap({
   cloudCoverSummary,
   loadCloudCoverViewport,
   mapMode,
+  onMapViewportChange,
   onSmoothCloudStateChange,
   radarFrame,
   radarPalette,
@@ -159,6 +163,7 @@ export function WeatherMap({
   smoothCloudRefreshKey,
   smoothCloudState,
   userLocation,
+  windCard,
 }: WeatherMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
@@ -270,6 +275,28 @@ export function WeatherMap({
       mapRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !isMapReady) return
+
+    const reportViewport = () => {
+      const bounds = map.getBounds()
+      onMapViewportChange({
+        west: bounds.getWest(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        north: bounds.getNorth(),
+        zoom: map.getZoom(),
+      })
+    }
+
+    reportViewport()
+    map.on('moveend', reportViewport)
+    return () => {
+      map.off('moveend', reportViewport)
+    }
+  }, [isMapReady, onMapViewportChange])
 
   useEffect(() => {
     const map = mapRef.current
@@ -603,7 +630,7 @@ export function WeatherMap({
   return (
     <section
       ref={panelRef}
-      className="map-panel"
+      className={`map-panel map-panel--${mapMode}`}
       aria-label="Interactive weather map"
       data-cloud-cover-cells={cloudCoverDataset?.cells.length}
       data-cloud-cover-requests={cloudCoverDataset?.requestCount}
@@ -614,6 +641,7 @@ export function WeatherMap({
       data-cloud-cover-fetched-at={cloudCoverDataset?.fetchedAtMs}
     >
       <div ref={containerRef} className="map-container" />
+      {windCard}
       {!isMapReady && !mapError && <div className="map-message map-message--loading" role="status">Loading map…</div>}
       {mapError && <div className="map-message" role="status">The map is temporarily unavailable. {mapError}</div>}
       {!mapError && (

@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is built incrementally as a static client-side web app. Version 0.2c3 adds an experimental smooth Cloud Cover trial while preserving the sampled model grid, RainViewer radar, and NOAA GOES satellite imagery as separate weather concepts.
+The application is built incrementally as a static client-side web app. Version 0.2d adds a compact current 10 m surface-wind readout while preserving Radar, Satellite, sampled Cloud Cover, and the experimental Smooth Cloud trial as separate weather concepts.
 
 ## Built through human-AI collaboration
 
@@ -13,6 +13,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-17-0.2d.md`](docs/journal/2026-09-17-0.2d.md) records the current surface-wind milestone and its verification.
 - [`docs/journal/2026-09-17-0.2c3.md`](docs/journal/2026-09-17-0.2c3.md) records the integrated Smooth Cloud usability trial and its verification.
 - [`docs/journal/2026-09-17-open-meteo-map-spike.md`](docs/journal/2026-09-17-open-meteo-map-spike.md) evaluates Open-Meteo's official spatial Weather Map Layer without changing production Cloud Cover.
 - [`docs/journal/2026-09-14-cloud-density-experiment.md`](docs/journal/2026-09-14-cloud-density-experiment.md) records the 7 × 7 through 21 × 21 Cloud Cover density evaluation.
@@ -23,7 +24,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2c3 (`0.2.0-beta.3`) is implemented and deployed. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Cloud Cover displays Open-Meteo's current model-derived total cloud fraction as an interpretive percentage grid. Smooth Cloud · Lab renders the official Open-Meteo spatial field for usability evaluation. Radar + Satellite preserves the former combined behavior and does not add either Cloud Cover mode to the stack.
+RainWatch 0.2d (`0.2.0-beta.4`) is implemented. A compact Wind card displays current Open-Meteo Best Match 10 m surface-wind speed, meteorological source direction, movement direction, gusts, model time, checked time, and freshness for either the relevant user location or map center. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Both Cloud Cover modes remain available without becoming core to the Wind milestone.
 
 A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
 
@@ -106,6 +107,7 @@ RainWatch uses:
 - NOAA/NESDIS `Most_Recent_MERGEDGC` as the cloud/satellite provider
 - Open-Meteo Best Match forecast models as the Total Cloud Cover provider
 - Open-Meteo Weather Map Layer 0.1.1 with NOAA HRRR CONUS as the experimental smooth Cloud Cover provider
+- Open-Meteo Best Match current conditions as the 10 m surface-wind provider
 
 External radar integration will live behind a small provider abstraction under `src/services/radar/`. UI components will consume provider-neutral radar frame data instead of constructing RainViewer URLs directly.
 
@@ -121,11 +123,13 @@ For the documented density experiment only, `?cloudGrid=7`, `11`, `15`, or `21` 
 
 Smooth Cloud · Lab dynamically loads `@openmeteo/weather-map-layer` 0.1.1 only when selected. It registers the official `om://` MapLibre protocol and requests the NOAA HRRR CONUS `cloud_cover` field for the next valid hour with linear interpolation and color blending. The official model footprint controls availability; outside that footprint RainWatch removes the raster and explains the continental-U.S. limitation. The mode has independent opacity, refresh, valid-time, loading, error, legend, and attribution UI. Its engine and WebAssembly reader are excluded from the PWA app-shell precache, and live Open-Meteo metadata and `.om` ranges remain network-only.
 
+The Wind integration is isolated under `src/services/wind/` and requests `wind_speed_10m`, `wind_direction_10m`, and `wind_gusts_10m` from Open-Meteo's `/v1/forecast` current conditions in mph. Wind direction is meteorological—the direction air comes from—so RainWatch adds 180 degrees for the movement arrow and destination label. A 270-degree reading therefore displays as `W → E` with an east-pointing arrow. The card uses the user location only while it is inside the current viewport; otherwise it explicitly uses map center. Completed target movements of at least 25 km can refresh the value, results are reused in memory for ten minutes, and manual Wind refresh remains separate from layer refresh controls.
+
 The development basemap is configured in `src/config/map.ts`. It currently uses OpenFreeMap and can be replaced by setting `VITE_BASEMAP_STYLE_URL` without changing the map component.
 
 MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
 
-No backend server, database, authentication system, or API key is required for version 0.2c3.
+No backend server, database, authentication system, or API key is required for version 0.2d.
 
 ## Known limitations
 
@@ -148,6 +152,9 @@ No backend server, database, authentication system, or API key is required for v
 - Smooth Cloud is a next-hour HRRR forecast field, not direct satellite observation. Its valid time and load time are separate from sampled Cloud Cover, Satellite, and Radar timestamps.
 - The experimental mode is materially heavier. Research measurements were about 264 KiB regionally and 1.0 MiB for a fresh whole-USA weather view, plus a one-time lazy engine/WebAssembly download.
 - `@openmeteo/weather-map-layer` is pinned to the pre-1.0 version 0.1.1 and currently declares GPL-2.0. Its long-term product and licensing suitability has not been decided. Required Open-Meteo attribution remains visible.
+- Wind is model-derived 10 m surface wind rather than a local weather-station observation. Terrain, buildings, and exposure can make actual wind differ from the model grid point.
+- Wind direction describes where air comes from; the displayed arrow points where it moves. Surface wind may differ substantially from cloud and precipitation motion aloft.
+- Wind is marked stale at 45 minutes—three expected 15-minute current-condition intervals. The card has no automatic background polling and uses a ten-minute memory cache plus meaningful 25 km movement threshold.
 - NOAA's latest merged image normally advances about every ten minutes. RainWatch warns when the image timestamp is at least 35 minutes old, allowing for slower scans and ordinary publication delay.
 - Radar and satellite observations have separate timestamps and are not synchronized.
 - Cloud imagery is a single latest image in 0.2b; cloud history and cloud animation are intentionally deferred.
@@ -160,4 +167,4 @@ No backend server, database, authentication system, or API key is required for v
 
 ## Next milestone
 
-Pause for real-device use and product review. Compare Cloud Cover and Smooth Cloud · Lab without removing either. A future decision should consider visual value against network/device cost, the CONUS-only footprint, upstream maturity, and GPL-2.0 compatibility. Wind remains deferred until explicitly requested.
+Pause for real-device use and product review. Validate Wind with a real location and installed iPhone PWA, and compare the model reading with local conditions. Animated wind, upper-air wind, cloud motion, rain/cloud ETA, and cloud animation remain deferred until explicitly requested.

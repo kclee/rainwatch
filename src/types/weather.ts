@@ -135,3 +135,25 @@ export interface CloudCoverDataset {
   processingDurationMs: number
   viewport: CloudCoverViewport
 }
+
+export type WindLocationSource = 'user' | 'map-center'
+
+export interface WindTarget {
+  latitude: number
+  longitude: number
+  source: WindLocationSource
+}
+
+export interface WindReading extends WindTarget {
+  speedMph: number
+  directionFromDegrees: number
+  gustMph: number | null
+  modelTimestampMs: number
+  intervalSeconds: number
+  fetchedAtMs: number
+  providerName: string
+  modelName: string
+}
+
+export type WindStatus = 'idle' | 'loading' | 'ready' | 'error'
+export type WindFreshnessStatus = 'fresh' | 'stale' | 'unavailable'

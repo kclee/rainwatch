@@ -153,6 +153,127 @@ h1 {
   top: 7.25rem;
 }
 
+.wind-card {
+  position: absolute;
+  z-index: 3;
+  top: 1rem;
+  right: 3.75rem;
+  width: min(15rem, calc(100% - 5rem));
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  border-radius: 0.75rem;
+  color: #0f172a;
+  background: rgba(248, 250, 252, 0.93);
+  box-shadow: 0 0.4rem 1.2rem rgba(2, 6, 23, 0.22);
+  backdrop-filter: blur(0.3rem);
+}
+
+.map-panel--cloud-cover .wind-card {
+  top: 7.25rem;
+}
+
+.wind-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wind-card__header strong {
+  font-size: 0.72rem;
+}
+
+.wind-card__header button {
+  min-height: 2rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(3, 105, 161, 0.4);
+  border-radius: 0.45rem;
+  color: #075985;
+  background: #e0f2fe;
+  cursor: pointer;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.wind-card__header button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.wind-card__header button:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 1px;
+}
+
+.wind-card__reading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.45rem;
+}
+
+.wind-card__arrow {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  color: #f8fafc;
+  background: #0369a1;
+  font-size: 1.25rem;
+  font-weight: 900;
+  transform: rotate(var(--wind-movement-degrees));
+}
+
+.wind-card__reading div {
+  display: grid;
+  line-height: 1.1;
+}
+
+.wind-card__reading b {
+  font-size: 0.95rem;
+}
+
+.wind-card__reading div span {
+  margin-top: 0.18rem;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.wind-card__gusts,
+.wind-card__time,
+.wind-card__warning,
+.wind-card__state {
+  margin: 0.38rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.wind-card__gusts {
+  font-weight: 800;
+}
+
+.wind-card__time,
+.wind-card small {
+  color: #475569;
+}
+
+.wind-card__time--stale,
+.wind-card__warning,
+.wind-card__state--error {
+  color: #92400e;
+  font-weight: 700;
+}
+
+.wind-card small {
+  display: block;
+  margin-top: 0.38rem;
+  font-size: 0.6rem;
+  line-height: 1.2;
+}
+
 .radar-notice {
   padding: 0.55rem 0.75rem;
   border: 1px solid rgba(251, 191, 36, 0.4);
@@ -706,6 +827,25 @@ h1 {
 
   .weather-notices--with-summary {
     top: 6.5rem;
+  }
+
+  .wind-card {
+    top: 0.65rem;
+    right: 3.25rem;
+    width: 12.5rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .map-panel--cloud-cover .wind-card {
+    top: 6.5rem;
+  }
+
+  .wind-card__header button {
+    min-height: 2.75rem;
+  }
+
+  .wind-card small {
+    display: none;
   }
 
   .radar-legend__scale {

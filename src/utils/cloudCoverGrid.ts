@@ -45,7 +45,7 @@ function unwrappedLongitudeSpan(viewport: CloudCoverViewport) {
   return Math.min(span, 360)
 }
 
-function viewportCenter(viewport: CloudCoverViewport) {
+export function viewportCenter(viewport: CloudCoverViewport) {
   const longitudeSpan = unwrappedLongitudeSpan(viewport)
   return {
     latitude: (viewport.south + viewport.north) / 2,
@@ -165,7 +165,7 @@ export function cloudCoverGridKey(grid: CloudCoverGrid) {
   ].join(':')
 }
 
-function pointIsInViewport(
+export function pointIsInViewport(
   point: Pick<CloudCoverCoordinate, 'latitude' | 'longitude'>,
   viewport: CloudCoverViewport,
 ) {

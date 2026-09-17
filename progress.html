@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2c3 deployed · Smooth Cloud lab active</span>
+      <span class="status">Version 0.2d · Current surface wind implemented</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Real-device evaluation.</strong> Compare sampled Cloud Cover and Smooth Cloud · Lab during normal use. Keep both while judging clarity against network/device cost, CONUS coverage, pre-1.0 maturity, and the unresolved GPL-2.0 licensing decision. Wind remains deferred.</p>
+      <p><strong>Real-device evaluation.</strong> Compare the model-derived 10 m Wind card with local conditions and confirm user-location behavior in the installed iPhone PWA. Animated wind, cloud motion, and ETA remain deferred.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.2c3 keeps the focused static architecture while adding an explicitly experimental smooth NOAA HRRR Cloud Cover view beside the existing sampled Open-Meteo grid. It has no backend, database, accounts, forecast AI, or native application.</p>
+        <p>Version 0.2d adds one compact Open-Meteo 10 m surface-wind reading for the relevant user location or map center. Radar, Satellite, and both Cloud Cover modes remain separate. It has no backend, database, accounts, forecast AI, or native application.</p>
       </article>
 
       <article class="card">
@@ -122,6 +122,14 @@
           <li class="done">Exact HRRR footprint check and unsupported-geography notice</li>
           <li class="done">On-demand engine loading outside the PWA app-shell precache</li>
           <li class="done">Graceful Smooth Cloud errors that preserve the basemap and other modes</li>
+          <li class="done">Compact current 10 m surface-wind card</li>
+          <li class="done">Accurate meteorological source and movement direction semantics</li>
+          <li class="done">16-point compass labels and correctly rotated movement arrow</li>
+          <li class="done">Separate sustained speed and gusts in mph</li>
+          <li class="done">User-location or map-center targeting with explicit label</li>
+          <li class="done">Wind model time, checked time, refresh, and stale state</li>
+          <li class="done">25 km movement threshold and ten-minute memory reuse</li>
+          <li class="done">Wind HTTP, 429, offline, timeout, and missing-value handling</li>
           <li class="done">Build, lint, and browser checks</li>
           <li class="done">Repository-derived GitHub Pages base path</li>
           <li class="done">Official GitHub Pages Actions workflow</li>
@@ -152,6 +160,7 @@
           <li><strong>Satellite:</strong> observed NOAA/NESDIS merged GOES GeoColor imagery</li>
           <li><strong>Cloud Cover:</strong> Open-Meteo Best Match model percentages behind a provider interface</li>
           <li><strong>Smooth Cloud lab:</strong> Open-Meteo Weather Map Layer 0.1.1, NOAA HRRR CONUS, and partial <code>.om</code> range reads</li>
+          <li><strong>Wind:</strong> Open-Meteo Best Match current 10 m speed, meteorological direction, and gusts</li>
           <li><strong>Location:</strong> browser Geolocation API with explicit user action</li>
           <li><strong>PWA:</strong> Vite PWA plugin and Workbox app-shell precache</li>
           <li><strong>Deployment:</strong> static GitHub Pages site at <code>/rainwatch/</code></li>
@@ -161,6 +170,12 @@
       <article class="card wide">
         <h2>Latest verification</h2>
         <ul>
+          <li>The live Wind card loaded Open-Meteo current speed, direction, gusts, model time, and checked time at map center.</li>
+          <li>A meaningful map pan changed the coordinate and produced a new Wind reading; manual Wind refresh completed independently.</li>
+          <li>Direction tests confirm that 270 degrees means from west and produces an east-pointing movement arrow.</li>
+          <li>At 390 × 844, the Wind card and its 44-pixel refresh control remained usable with no horizontal overflow.</li>
+          <li>Wind and the mobile Cloud Cover summary occupied separate positions without overlap.</li>
+          <li>Nineteen automated checks, lint, and production/PWA build passed with no browser console warnings or errors.</li>
           <li>The integrated Smooth Cloud mode loaded the official NOAA HRRR CONUS <code>cloud_cover</code> field and kept MapLibre labels readable above the smooth raster.</li>
           <li>The sampled Cloud Cover mode remained available and loaded a 47 percent map-center value during the same browser session.</li>
           <li>Panning outside the official HRRR footprint removed the weather raster and displayed the continental-U.S. coverage notice; returning restored the layer.</li>
@@ -234,7 +249,7 @@
     </section>
 
     <footer>
-      Version 0.2c3 evidence: <a href="docs/journal/2026-09-17-0.2c3.md">docs/journal/2026-09-17-0.2c3.md</a>. Research spike: <a href="docs/journal/2026-09-17-open-meteo-map-spike.md">docs/journal/2026-09-17-open-meteo-map-spike.md</a>. Updated 2026-09-17.
+      Version 0.2d evidence: <a href="docs/journal/2026-09-17-0.2d.md">docs/journal/2026-09-17-0.2d.md</a>. Version 0.2c3 evidence: <a href="docs/journal/2026-09-17-0.2c3.md">docs/journal/2026-09-17-0.2c3.md</a>. Updated 2026-09-17.
     </footer>
   </main>
 </body>
