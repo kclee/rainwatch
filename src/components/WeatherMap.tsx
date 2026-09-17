@@ -76,6 +76,7 @@ interface WeatherMapProps {
   loadCloudCoverViewport: (viewport: CloudCoverViewport) => Promise<void>
   mapMode: MapMode
   onMapViewportChange: (viewport: CloudCoverViewport) => void
+  onSatelliteFrameError: (frameId: string) => void
   onSmoothCloudStateChange: (state: SmoothCloudState) => void
   radarFrame: RadarFrame | null
   radarPalette: RadarPalette
@@ -154,6 +155,7 @@ export function WeatherMap({
   loadCloudCoverViewport,
   mapMode,
   onMapViewportChange,
+  onSatelliteFrameError,
   onSmoothCloudStateChange,
   radarFrame,
   radarPalette,
@@ -178,6 +180,8 @@ export function WeatherMap({
   const smoothCloudOpacityRef = useRef(smoothCloudOpacity)
   const smoothCloudValidTimeRef = useRef<number | null>(null)
   const smoothCloudStateChangeRef = useRef(onSmoothCloudStateChange)
+  const satelliteFrameRef = useRef(satelliteFrame)
+  const satelliteFrameErrorRef = useRef(onSatelliteFrameError)
   const cloudCoverData = useMemo(
     () => (cloudCoverDataset ? cloudCoverGeoJson(cloudCoverDataset) : null),
     [cloudCoverDataset],
@@ -194,6 +198,14 @@ export function WeatherMap({
   useEffect(() => {
     smoothCloudStateChangeRef.current = onSmoothCloudStateChange
   }, [onSmoothCloudStateChange])
+
+  useEffect(() => {
+    satelliteFrameRef.current = satelliteFrame
+  }, [satelliteFrame])
+
+  useEffect(() => {
+    satelliteFrameErrorRef.current = onSatelliteFrameError
+  }, [onSatelliteFrameError])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -226,6 +238,10 @@ export function WeatherMap({
       }
       if ('sourceId' in event && event.sourceId === SATELLITE_SOURCE_ID) {
         setSatelliteImageError('Satellite image could not be loaded. Other map layers remain available.')
+        const failedFrame = satelliteFrameRef.current
+        if (failedFrame?.source === 'archive') {
+          satelliteFrameErrorRef.current(failedFrame.id)
+        }
         return
       }
       if ('sourceId' in event && event.sourceId === CLOUD_COVER_SOURCE_ID) {
@@ -340,6 +356,7 @@ export function WeatherMap({
     }
 
     const updateSatelliteImage = () => {
+      setSatelliteImageError(null)
       const bounds = map.getBounds()
       const container = map.getContainer()
       const request = buildSatelliteImageRequest(satelliteFrame, {
@@ -347,10 +364,12 @@ export function WeatherMap({
         width: container.clientWidth, height: container.clientHeight, pixelRatio: window.devicePixelRatio,
       })
       if (!request) {
+        panelRef.current?.removeAttribute('data-satellite-image-url')
         if (map.getLayer(SATELLITE_LAYER_ID)) map.removeLayer(SATELLITE_LAYER_ID)
         if (map.getSource(SATELLITE_SOURCE_ID)) map.removeSource(SATELLITE_SOURCE_ID)
         return
       }
+      panelRef.current?.setAttribute('data-satellite-image-url', request.url)
       const existingSource = map.getSource(SATELLITE_SOURCE_ID) as ImageSource | undefined
       if (existingSource) {
         existingSource.updateImage(request)
@@ -639,6 +658,8 @@ export function WeatherMap({
       data-cloud-cover-response-ms={cloudCoverDataset?.responseDurationMs}
       data-cloud-cover-processing-ms={cloudCoverDataset?.processingDurationMs}
       data-cloud-cover-fetched-at={cloudCoverDataset?.fetchedAtMs}
+      data-satellite-frame-id={satelliteFrame?.id}
+      data-satellite-frame-source={satelliteFrame?.source}
     >
       <div ref={containerRef} className="map-container" />
       {windCard}

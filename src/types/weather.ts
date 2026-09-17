@@ -64,6 +64,7 @@ export interface CloudFrame {
   objectId: number
   name: string
   timestampMs: number | null
+  source: 'latest' | 'archive'
   attributionLabel: string
   attributionUrl: string
 }

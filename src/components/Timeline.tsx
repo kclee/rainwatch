@@ -19,6 +19,7 @@ const frameTimeFormatter = new Intl.DateTimeFormat(undefined, {
 interface TimelineProps {
   frames: RadarFrame[]
   satelliteFrame: CloudFrame | null
+  satelliteFrames: CloudFrame[]
   satelliteOpacity: number
   satelliteStatus: CloudStatus
   cloudCoverDataset: CloudCoverDataset | null
@@ -27,21 +28,26 @@ interface TimelineProps {
   smoothCloudOpacity: number
   smoothCloudState: SmoothCloudState
   isPlaying: boolean
+  isSatellitePlaying: boolean
   mapMode: MapMode
   radarOpacity: number
   selectedIndex: number
+  selectedSatelliteIndex: number
   nowMs: number
   onChangeOpacity: (opacity: number) => void
   onChangeSatelliteOpacity: (opacity: number) => void
   onChangeCloudCoverOpacity: (opacity: number) => void
   onChangeSmoothCloudOpacity: (opacity: number) => void
   onSelectFrame: (index: number) => void
+  onSelectSatelliteFrame: (index: number) => void
   onTogglePlayback: () => void
+  onToggleSatellitePlayback: () => void
 }
 
 export function Timeline({
   frames,
   satelliteFrame,
+  satelliteFrames,
   satelliteOpacity,
   satelliteStatus,
   cloudCoverDataset,
@@ -50,16 +56,20 @@ export function Timeline({
   smoothCloudOpacity,
   smoothCloudState,
   isPlaying,
+  isSatellitePlaying,
   mapMode,
   radarOpacity,
   selectedIndex,
+  selectedSatelliteIndex,
   nowMs,
   onChangeOpacity,
   onChangeSatelliteOpacity,
   onChangeCloudCoverOpacity,
   onChangeSmoothCloudOpacity,
   onSelectFrame,
+  onSelectSatelliteFrame,
   onTogglePlayback,
+  onToggleSatellitePlayback,
 }: TimelineProps) {
   const selectedFrame = frames[selectedIndex]
   const showRadar = mapMode === 'radar' || mapMode === 'both'
@@ -89,7 +99,13 @@ export function Timeline({
       ? null
       : new Date(satelliteFrame.timestampMs)
   const satelliteRelativeLabel = satelliteDate
-    ? `Satellite · Latest · ${formatRelativeTime(satelliteDate.getTime(), nowMs)}`
+    ? `Satellite · ${
+        mapMode === 'satellite' && satelliteFrames.length > 0
+          ? selectedSatelliteIndex === satelliteFrames.length - 1
+            ? 'Latest · '
+            : ''
+          : 'Latest · '
+      }${formatRelativeTime(satelliteDate.getTime(), nowMs)}`
     : satelliteStatus === 'loading'
       ? 'Satellite · Loading…'
       : 'Satellite · Time unavailable'
@@ -149,7 +165,33 @@ export function Timeline({
           </div>
         </div>
       )}
-      {showSatellite && (
+      {mapMode === 'satellite' && satelliteFrame && satelliteDate && satelliteFrames.length > 0 && (
+        <div className="radar-controls satellite-history-controls">
+          <button type="button" className="timeline-button timeline-button--play" onClick={onToggleSatellitePlayback} disabled={satelliteFrames.length < 2} aria-pressed={isSatellitePlaying}>
+            {isSatellitePlaying ? 'Pause' : 'Play'}
+          </button>
+          <button type="button" className="timeline-button timeline-button--previous" onClick={() => onSelectSatelliteFrame(selectedSatelliteIndex - 1)} disabled={selectedSatelliteIndex === 0}>
+            Previous
+          </button>
+          <div className="timeline-track">
+            <label htmlFor="satellite-frame">Satellite history</label>
+            <input id="satellite-frame" type="range" min="0" max={satelliteFrames.length - 1} step="1" value={selectedSatelliteIndex} aria-valuetext={`${satelliteRelativeLabel}, ${frameTimeFormatter.format(satelliteDate)}, frame ${selectedSatelliteIndex + 1} of ${satelliteFrames.length}`} onChange={(event) => onSelectSatelliteFrame(Number(event.target.value))} />
+          </div>
+          <div className="timeline-time" aria-live={isSatellitePlaying ? 'off' : 'polite'}>
+            <strong>{satelliteRelativeLabel}</strong>
+            <time dateTime={satelliteDate.toISOString()}>{frameTimeFormatter.format(satelliteDate)}</time>
+            <span>Frame {selectedSatelliteIndex + 1} of {satelliteFrames.length} · Observed</span>
+          </div>
+          <button type="button" className="timeline-button timeline-button--next" onClick={() => onSelectSatelliteFrame(selectedSatelliteIndex + 1)} disabled={selectedSatelliteIndex === satelliteFrames.length - 1}>
+            Next
+          </button>
+          <div className="opacity-control">
+            <label htmlFor="satellite-opacity">Satellite opacity <output htmlFor="satellite-opacity">{satelliteOpacityPercent}%</output></label>
+            <input id="satellite-opacity" type="range" min="0" max="1" step="0.05" value={satelliteOpacity} aria-valuetext={`${satelliteOpacityPercent}%`} onChange={(event) => onChangeSatelliteOpacity(Number(event.target.value))} />
+          </div>
+        </div>
+      )}
+      {showSatellite && (mapMode !== 'satellite' || satelliteFrames.length === 0) && (
         <div className="cloud-controls">
           <div className="timeline-time" aria-live="polite">
             <strong>{satelliteRelativeLabel}</strong>

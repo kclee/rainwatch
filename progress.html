@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2d deployed · Current surface wind active</span>
+      <span class="status">Version 0.2e ready · Historical satellite animation active</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Real-device evaluation.</strong> Compare the model-derived 10 m Wind card with local conditions and confirm user-location behavior in the installed iPhone PWA. Animated wind, cloud motion, and ETA remain deferred.</p>
+      <p><strong>Real-device evaluation.</strong> Confirm historical Satellite controls, user-location behavior, and cache reuse in the installed iPhone PWA. Motion vectors, synchronized radar/satellite playback, and ETA remain deferred.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.2d adds one compact Open-Meteo 10 m surface-wind reading for the relevant user location or map center. Radar, Satellite, and both Cloud Cover modes remain separate. It has no backend, database, accounts, forecast AI, or native application.</p>
+        <p>Version 0.2e adds an independent three-hour NOAA/NESDIS satellite timeline built from actual rolling-archive records. Radar + Satellite remains latest-only and unsynchronized. It has no backend, database, accounts, forecast AI, or native application.</p>
       </article>
 
       <article class="card">
@@ -101,9 +101,17 @@
           <li class="done">Viewport-sized Web Mercator satellite export</li>
           <li class="done">Satellite opacity and independent timestamp</li>
           <li class="done">35-minute satellite freshness threshold</li>
+          <li class="done">Actual NOAA rolling-archive record discovery</li>
+          <li class="done">Three-hour historical Satellite slider and timestamps</li>
+          <li class="done">Satellite Previous, Next, Play, Pause, Home, and End</li>
+          <li class="done">Newest-first selection and independent playback state</li>
+          <li class="done">Latest-only Radar + Satellite mode preserved</li>
+          <li class="done">Lazy frame loading and failed-frame playback skipping</li>
+          <li class="done">40-entry, 24-hour archive-image PWA reuse cache</li>
+          <li class="done">Measured metadata, frame, full-window, and pan bandwidth</li>
           <li class="done">Independent provider failure handling</li>
           <li class="done">Lazy cloud loading and move-end refresh</li>
-          <li class="done">NOAA imagery remains network-only in the PWA</li>
+          <li class="done">Fresh NOAA metadata and current imagery remain network-only</li>
           <li class="done">Open-Meteo Total Cloud Cover provider</li>
           <li class="done">One-request 5 × 5 and 7 × 7 coordinate batching</li>
           <li class="done">Soft non-interpolated Cloud Cover cells</li>
@@ -157,7 +165,7 @@
           <li><strong>Map:</strong> MapLibre GL JS 6.9.0</li>
           <li><strong>Basemap:</strong> configurable OpenFreeMap development style</li>
           <li><strong>Radar:</strong> RainViewer historical frames behind a provider interface</li>
-          <li><strong>Satellite:</strong> observed NOAA/NESDIS merged GOES GeoColor imagery</li>
+          <li><strong>Satellite:</strong> observed NOAA/NESDIS merged GOES GeoColor latest image plus rolling archive</li>
           <li><strong>Cloud Cover:</strong> Open-Meteo Best Match model percentages behind a provider interface</li>
           <li><strong>Smooth Cloud lab:</strong> Open-Meteo Weather Map Layer 0.1.1, NOAA HRRR CONUS, and partial <code>.om</code> range reads</li>
           <li><strong>Wind:</strong> Open-Meteo Best Match current 10 m speed, meteorological direction, and gusts</li>
@@ -170,6 +178,13 @@
       <article class="card wide">
         <h2>Latest verification</h2>
         <ul>
+          <li>The official archive returned 19 actual records across three hours at a ten-minute cadence; RainWatch selected the newest by default.</li>
+          <li>Satellite Previous/Next, Home/End, looping Play/Pause, timestamp, frame count, and opacity controls worked independently of radar.</li>
+          <li>Radar + Satellite remained latest-only and displayed no satellite-history control.</li>
+          <li>The default desktop archive metadata was 4,457 bytes; the first selected image was about 1.16 MiB; all 19 unique images totaled about 24.05 MiB.</li>
+          <li>A representative pan added one approximately 1.30 MiB selected-frame export; repeated archive URLs are eligible for the 40-entry PWA cache.</li>
+          <li>At 390 × 844, the historical controls remained reachable, buttons were 44 pixels tall, and no horizontal overflow or browser console issue appeared.</li>
+          <li>Twenty-three automated checks, lint, and the production/PWA build passed.</li>
           <li>The live Wind card loaded Open-Meteo current speed, direction, gusts, model time, and checked time at map center.</li>
           <li>A meaningful map pan changed the coordinate and produced a new Wind reading; manual Wind refresh completed independently.</li>
           <li>Direction tests confirm that 270 degrees means from west and produces an east-pointing movement arrow.</li>
@@ -252,7 +267,7 @@
     </section>
 
     <footer>
-      Version 0.2d evidence: <a href="docs/journal/2026-09-17-0.2d.md">docs/journal/2026-09-17-0.2d.md</a>. Version 0.2c3 evidence: <a href="docs/journal/2026-09-17-0.2c3.md">docs/journal/2026-09-17-0.2c3.md</a>. Updated 2026-09-17.
+      Version 0.2e evidence: <a href="docs/journal/2026-09-17-0.2e.md">docs/journal/2026-09-17-0.2e.md</a>. Version 0.2d evidence: <a href="docs/journal/2026-09-17-0.2d.md">docs/journal/2026-09-17-0.2d.md</a>. Updated 2026-09-17.
     </footer>
   </main>
 </body>

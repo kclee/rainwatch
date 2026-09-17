@@ -72,6 +72,20 @@ export default defineConfig(({ command, isPreview }) => {
               handler: 'NetworkOnly',
             },
             {
+              urlPattern: /^https:\/\/satellitemaps\.nesdis\.noaa\.gov\/arcgis\/rest\/services\/MERGEDGC_Last_24hr\/ImageServer\/exportImage/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'rainwatch-noaa-satellite-history',
+                expiration: {
+                  maxEntries: 40,
+                  maxAgeSeconds: 24 * 60 * 60,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
               urlPattern: /^https:\/\/satellitemaps\.nesdis\.noaa\.gov\//,
               handler: 'NetworkOnly',
             },

@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is built incrementally as a static client-side web app. Version 0.2d adds a compact current 10 m surface-wind readout while preserving Radar, Satellite, sampled Cloud Cover, and the experimental Smooth Cloud trial as separate weather concepts.
+The application is built incrementally as a static client-side web app. Version 0.2e adds a short historical NOAA satellite timeline while preserving Radar, Wind, sampled Cloud Cover, and the experimental Smooth Cloud trial as separate weather concepts.
 
 ## Built through human-AI collaboration
 
@@ -13,6 +13,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-17-0.2e.md`](docs/journal/2026-09-17-0.2e.md) records the historical satellite-animation milestone, bandwidth measurements, and verification.
 - [`docs/journal/2026-09-17-0.2d.md`](docs/journal/2026-09-17-0.2d.md) records the current surface-wind milestone and its verification.
 - [`docs/journal/2026-09-17-0.2c3.md`](docs/journal/2026-09-17-0.2c3.md) records the integrated Smooth Cloud usability trial and its verification.
 - [`docs/journal/2026-09-17-open-meteo-map-spike.md`](docs/journal/2026-09-17-open-meteo-map-spike.md) evaluates Open-Meteo's official spatial Weather Map Layer without changing production Cloud Cover.
@@ -24,7 +25,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2d (`0.2.0-beta.4`) is implemented and deployed. A compact Wind card displays current Open-Meteo Best Match 10 m surface-wind speed, meteorological source direction, movement direction, gusts, model time, checked time, and freshness for either the relevant user location or map center. Radar preserves the complete timeline experience. Satellite displays the latest merged NOAA/NESDIS GOES-East and GOES-West GeoColor image. Both Cloud Cover modes remain available without becoming core to the Wind milestone.
+RainWatch 0.2e (`0.2.0-beta.5`) is implemented. Satellite mode discovers actual records from NOAA/NESDIS's rolling merged-GOES GeoColor archive and exposes the most recent three hours through a timeline, Previous/Next, keyboard-capable slider, Play/Pause, absolute time, relative age, frame count, and independent opacity. The newest archive frame is selected by default. Radar + Satellite deliberately keeps the existing latest-only satellite image, so radar and satellite histories are not presented as synchronized.
 
 A post-0.2c density experiment compared 7 × 7, 11 × 11, 15 × 15, and 21 × 21 without interpolation. All four can return in one request when coordinate commas remain literal, but 21 × 21 roughly doubles the measured 15 × 15 response for only a modest visual improvement. Sampling alone did not remove the checkerboard effect, so the deployed/default 5 × 5 / 7 × 7 behavior remains unchanged pending a separately authorized smoothing experiment.
 
@@ -104,7 +105,7 @@ RainWatch uses:
 - MapLibre GL JS for the interactive map
 - The browser Geolocation API for the user's position
 - RainViewer as the first radar-data provider
-- NOAA/NESDIS `Most_Recent_MERGEDGC` as the cloud/satellite provider
+- NOAA/NESDIS `Most_Recent_MERGEDGC` and `MERGEDGC_Last_24hr` as the latest and historical satellite providers
 - Open-Meteo Best Match forecast models as the Total Cloud Cover provider
 - Open-Meteo Weather Map Layer 0.1.1 with NOAA HRRR CONUS as the experimental smooth Cloud Cover provider
 - Open-Meteo Best Match current conditions as the 10 m surface-wind provider
@@ -113,7 +114,11 @@ External radar integration will live behind a small provider abstraction under `
 
 The RainViewer integration is implemented in `src/services/radar/RainViewerRadarProvider.ts`. It reads only the API's historical `radar.past` frames, validates the response, and produces provider-neutral tile templates for the map.
 
-The NOAA integration is isolated in `src/services/cloud/NoaaGoesCloudProvider.ts`. It reads the latest image record from the official [`Most_Recent_MERGEDGC` ImageServer](https://satellitemaps.nesdis.noaa.gov/arcgis/rest/services/Most_Recent_MERGEDGC/ImageServer), then builds a viewport-sized Web Mercator `exportImage` request for MapLibre. Requests are capped at 1600 × 1200 pixels and 1.5× pixel density and occur only when cloud imagery is visible, refreshed, resized, or the map finishes moving.
+The NOAA integration is isolated under `src/services/cloud/`. `NoaaGoesCloudProvider.ts` reads the current record from the official [`Most_Recent_MERGEDGC` ImageServer](https://satellitemaps.nesdis.noaa.gov/arcgis/rest/services/Most_Recent_MERGEDGC/ImageServer). `NoaaGoesArchiveProvider.ts` queries actual `end_time` records from the official [`MERGEDGC_Last_24hr` ImageServer](https://satellitemaps.nesdis.noaa.gov/arcgis/rest/services/MERGEDGC_Last_24hr/ImageServer), orders them chronologically, and retains up to three recent hours with a 20-frame safety cap. Both providers use the same viewport-sized Web Mercator `exportImage` builder. Requests are capped at 1600 × 1200 pixels and 1.5× pixel density.
+
+Opening Satellite mode downloads archive metadata and only the selected image. Frames are requested lazily as the user selects them or playback reaches them; opacity changes do not request a replacement. Archive image URLs use a 40-entry, 24-hour CacheFirst PWA runtime cache, so a previously loaded frame/viewport can be reused during a loop. A map pan changes the viewport and therefore requires one new image for the selected frame. If the archive is unavailable, RainWatch keeps the current-image provider as a visible fallback. A failed individual archive image is marked so playback can skip it.
+
+In the 2026-09-17 whole-USA desktop measurement, archive metadata was 4,457 bytes and the selected frame was 1,220,441 bytes (about 1.16 MiB). The 19-frame, three-hour window totaled 25,220,500 image bytes plus metadata (about 24.06 MiB) only after every frame had been viewed. Individual frames ranged from 1,220,441 to 1,367,006 bytes. One representative pan added 1,361,804 bytes (about 1.30 MiB) for the selected frame. These figures vary with viewport size, device pixel ratio, image content, and current frame cadence.
 
 The Open-Meteo integration is isolated under `src/services/cloudCover/`. It calls the official [`/v1/forecast`](https://open-meteo.com/en/docs) endpoint with `current=cloud_cover`, comma-separated latitude and longitude lists, Unix timestamps, and GMT. The generic API's automatic Best Match selects the highest-resolution suitable forecast models by location; a single viewport may therefore use different underlying regional models. RainWatch does not claim that these values are direct satellite measurements.
 
@@ -129,7 +134,7 @@ The development basemap is configured in `src/config/map.ts`. It currently uses 
 
 MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
 
-No backend server, database, authentication system, or API key is required for version 0.2d.
+No backend server, database, authentication system, or API key is required for version 0.2e.
 
 ## Known limitations
 
@@ -156,15 +161,16 @@ No backend server, database, authentication system, or API key is required for v
 - Wind direction describes where air comes from; the displayed arrow points where it moves. Surface wind may differ substantially from cloud and precipitation motion aloft.
 - Wind is marked stale at 45 minutes—three expected 15-minute current-condition intervals. The card has no automatic background polling and uses a ten-minute memory cache plus meaningful 25 km movement threshold.
 - NOAA's latest merged image normally advances about every ten minutes. RainWatch warns when the image timestamp is at least 35 minutes old, allowing for slower scans and ordinary publication delay.
+- NOAA describes the rolling archive cadence as 10 or 15 minutes depending on scan mode. RainWatch uses the records actually returned rather than manufacturing expected timestamps; a three-hour window therefore has a variable frame count.
 - Radar and satellite observations have separate timestamps and are not synchronized.
-- Cloud imagery is a single latest image in 0.2b; cloud history and cloud animation are intentionally deferred.
+- Historical animation is intentionally limited to Satellite mode. Radar + Satellite keeps the latest NOAA image and does not attempt to synchronize the radar and satellite observation timelines.
 - The NOAA service extends to approximately 76° north and south; polar areas and views crossing the antimeridian are not a focus of this milestone.
 - Map and radar imagery require internet access even though the application has no backend.
-- Offline support is deliberately limited to the application shell. Live NOAA imagery, both Open-Meteo Cloud Cover sources, RainViewer metadata and radar imagery, OpenFreeMap tiles, and geolocation are not cached by RainWatch. The experimental Smooth Cloud engine is also loaded only on demand.
+- Offline support remains deliberately limited. The application shell and previously viewed historical satellite frame/viewport URLs can be reused, but fresh NOAA metadata/current imagery, both Open-Meteo Cloud Cover sources, RainViewer metadata and radar imagery, OpenFreeMap tiles, and geolocation still need their respective browser/network services. The experimental Smooth Cloud engine is loaded only on demand.
 - iOS does not show a universal automatic install prompt; installation uses Safari's **Add to Home Screen** action.
 - Browser geolocation normally requires localhost or HTTPS and still needs a manual permission-granted acceptance check.
 - Vite reports a bundle-size advisory because MapLibre and its worker are substantial browser dependencies.
 
 ## Next milestone
 
-Pause for real-device use and product review. Validate Wind with a real location and installed iPhone PWA, and compare the model reading with local conditions. Animated wind, upper-air wind, cloud motion, rain/cloud ETA, and cloud animation remain deferred until explicitly requested.
+Pause for real-device use and product review. Validate the installed iPhone PWA, real location, and the historical Satellite controls on a physical device. Motion vectors, cloud tracking, radar/satellite synchronization, precipitation forecasts, and rain/cloud ETA remain deferred until explicitly requested.

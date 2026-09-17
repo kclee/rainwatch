@@ -1,14 +1,14 @@
 {
   "name": "rainwatch",
   "private": true,
-  "version": "0.2.0-beta.4",
+  "version": "0.2.0-beta.5",
   "type": "module",
   "scripts": {
     "generate:icons": "node scripts/generate-icons.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --test src/utils/cloudCoverGrid.test.ts src/utils/smoothCloud.test.ts src/utils/wind.test.ts src/services/cloudCover/OpenMeteoCloudCoverProvider.test.ts src/services/wind/OpenMeteoWindProvider.test.ts",
+    "test": "node --test src/utils/cloudCoverGrid.test.ts src/utils/smoothCloud.test.ts src/utils/wind.test.ts src/services/cloud/NoaaGoesArchiveProvider.test.ts src/services/cloudCover/OpenMeteoCloudCoverProvider.test.ts src/services/wind/OpenMeteoWindProvider.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

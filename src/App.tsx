@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { MapModeSelector } from './components/MapModeSelector'
 import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
 import { WindCard } from './components/WindCard'
-import { DEFAULT_CLOUD_OPACITY } from './config/cloud'
+import {
+  DEFAULT_CLOUD_OPACITY,
+  SATELLITE_PLAYBACK_INTERVAL_MS,
+} from './config/cloud'
 import {
   DEFAULT_CLOUD_COVER_OPACITY,
   parseCloudCoverGridSize,
@@ -19,6 +22,7 @@ import { useCloudCover } from './hooks/useCloudCover'
 import { useCloudImagery } from './hooks/useCloudImagery'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useRadarFrames } from './hooks/useRadarFrames'
+import { useSatelliteHistory } from './hooks/useSatelliteHistory'
 import { useWind } from './hooks/useWind'
 import type {
   CloudCoverViewport,
@@ -46,6 +50,7 @@ function App() {
     window.location.search,
   )
   const satellite = useCloudImagery(showSatellite)
+  const satelliteHistory = useSatelliteHistory(mapMode === 'satellite')
   const cloudCover = useCloudCover(showCloudCover, cloudCoverGridSizeOverride)
   const [mapViewport, setMapViewport] = useState<CloudCoverViewport | null>(null)
   const windTarget = useMemo(
@@ -55,6 +60,13 @@ function App() {
   const wind = useWind(windTarget)
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [selectedSatelliteFrameId, setSelectedSatelliteFrameId] = useState<
+    string | null
+  >(null)
+  const [isSatellitePlaying, setIsSatellitePlaying] = useState(false)
+  const [failedSatelliteFrameIds, setFailedSatelliteFrameIds] = useState<
+    Set<string>
+  >(() => new Set())
   const [radarOpacity, setRadarOpacity] = useState(DEFAULT_RADAR_OPACITY)
   const [satelliteOpacity, setSatelliteOpacity] = useState(DEFAULT_CLOUD_OPACITY)
   const [cloudCoverOpacity, setCloudCoverOpacity] = useState(
@@ -81,12 +93,31 @@ function App() {
       ? requestedFrameIndex
       : Math.max(radar.frames.length - 1, 0)
   const selectedFrame = radar.frames[selectedFrameIndex] ?? radar.latestFrame
+  const requestedSatelliteFrameIndex = selectedSatelliteFrameId
+    ? satelliteHistory.frames.findIndex(
+        (frame) => frame.id === selectedSatelliteFrameId,
+      )
+    : -1
+  const selectedSatelliteFrameIndex =
+    requestedSatelliteFrameIndex >= 0
+      ? requestedSatelliteFrameIndex
+      : Math.max(satelliteHistory.frames.length - 1, 0)
+  const selectedSatelliteHistoryFrame =
+    satelliteHistory.frames[selectedSatelliteFrameIndex] ?? null
+  const displayedSatelliteFrame =
+    mapMode === 'satellite'
+      ? selectedSatelliteHistoryFrame ?? satellite.frame
+      : satellite.frame
+  const newestSatelliteFrame =
+    mapMode === 'satellite'
+      ? satelliteHistory.frames.at(-1) ?? satellite.frame
+      : satellite.frame
   const freshness = getRadarFreshness(
     radar.latestFrame?.timestampSeconds ?? null,
     nowMs,
   )
   const satelliteFreshness = getCloudFreshness(
-    satellite.frame?.timestampMs ?? null,
+    newestSatelliteFrame?.timestampMs ?? null,
     nowMs,
   )
   const cloudCoverFreshness = getCloudCoverFreshness(
@@ -108,13 +139,23 @@ function App() {
   const radarUpdateLabel = radar.isRefreshing
     ? 'Radar · Refreshing…'
     : `Radar · ${formatMetadataRefreshTime(radar.lastSuccessfulRefreshAt, nowMs)}`
-  const satelliteUpdateLabel = satellite.isRefreshing
+  const satelliteIsRefreshing =
+    satellite.isRefreshing ||
+    (mapMode === 'satellite' && satelliteHistory.isRefreshing)
+  const satelliteUpdateLabel = satelliteIsRefreshing
     ? 'Satellite · Refreshing…'
-    : satellite.status === 'error' || satellite.status === 'empty'
-      ? 'Satellite · Unavailable'
-      : satellite.lastSuccessfulRefreshAt === null
-        ? 'Satellite · Not loaded'
-        : `Satellite · ${formatMetadataRefreshTime(satellite.lastSuccessfulRefreshAt, nowMs)}`
+    : mapMode === 'satellite' &&
+        (satelliteHistory.status === 'error' ||
+          satelliteHistory.status === 'empty') &&
+        satellite.frame
+      ? 'Satellite history · Latest only'
+      : mapMode === 'satellite' && satelliteHistory.lastSuccessfulRefreshAt !== null
+        ? `Satellite history · ${formatMetadataRefreshTime(satelliteHistory.lastSuccessfulRefreshAt, nowMs)}`
+        : satellite.status === 'error' || satellite.status === 'empty'
+          ? 'Satellite · Unavailable'
+          : satellite.lastSuccessfulRefreshAt === null
+            ? 'Satellite · Not loaded'
+            : `Satellite · ${formatMetadataRefreshTime(satellite.lastSuccessfulRefreshAt, nowMs)}`
   const cloudCoverUpdateLabel = cloudCover.isRefreshing
     ? 'Cloud Cover · Refreshing…'
     : cloudCover.status === 'error' || cloudCover.status === 'empty'
@@ -139,15 +180,23 @@ function App() {
       : freshness.status === 'stale'
         ? `Radar data may be delayed. Latest frame is ${freshness.ageMinutes} min old.`
         : null
-  const satelliteNotice = satellite.refreshError
-    ? satellite.refreshError
-    : satellite.status === 'error' || satellite.status === 'empty'
-      ? satellite.message
-      : satellite.frame?.timestampMs === null
-        ? 'Satellite imagery loaded, but NOAA did not provide its timestamp.'
-        : satelliteFreshness.status === 'stale'
-          ? `Satellite imagery may be delayed. Latest image is ${satelliteFreshness.ageMinutes} min old.`
-          : null
+  const satelliteNotice =
+    mapMode === 'satellite' && satelliteHistory.refreshError
+      ? satelliteHistory.refreshError
+      : mapMode === 'satellite' &&
+          (satelliteHistory.status === 'error' ||
+            satelliteHistory.status === 'empty') &&
+          satellite.frame
+        ? `${satelliteHistory.message} Showing the current latest image instead.`
+        : satellite.refreshError
+          ? satellite.refreshError
+          : satellite.status === 'error' || satellite.status === 'empty'
+            ? satellite.message
+            : displayedSatelliteFrame?.timestampMs === null
+              ? 'Satellite imagery loaded, but NOAA did not provide its timestamp.'
+              : satelliteFreshness.status === 'stale'
+                ? `Satellite imagery may be delayed. Latest image is ${satelliteFreshness.ageMinutes} min old.`
+                : null
   const cloudCoverNotice = cloudCover.refreshError
     ? cloudCover.refreshError
     : cloudCover.status === 'error' || cloudCover.status === 'empty'
@@ -156,9 +205,13 @@ function App() {
         ? `Cloud Cover model time is ${cloudCoverFreshness.ageMinutes} min old.`
         : null
   const isPlaybackActive = isPlaying && showRadar && radar.frames.length >= 2
+  const isSatellitePlaybackActive =
+    isSatellitePlaying &&
+    mapMode === 'satellite' &&
+    satelliteHistory.frames.length >= 2
   const visibleDataIsRefreshing =
     (showRadar && radar.isRefreshing) ||
-    (showSatellite && satellite.isRefreshing) ||
+    (showSatellite && satelliteIsRefreshing) ||
     (showCloudCover && cloudCover.isRefreshing) ||
     (showSmoothCloud && smoothCloudState.status === 'loading')
   const refreshLabel =
@@ -177,11 +230,13 @@ function App() {
     if (nextMode !== 'radar' && nextMode !== 'both') {
       setIsPlaying(false)
     }
+    if (nextMode !== 'satellite') setIsSatellitePlaying(false)
   }
 
   function refreshVisibleData() {
     if (showRadar) void radar.refreshRadar()
     if (showSatellite) void satellite.refreshCloud()
+    if (mapMode === 'satellite') void satelliteHistory.refreshHistory()
     if (showCloudCover) void cloudCover.refreshCloudCover()
     if (showSmoothCloud) {
       setSmoothCloudRefreshKey((refreshKey) => refreshKey + 1)
@@ -211,6 +266,41 @@ function App() {
     }, RADAR_PLAYBACK_INTERVAL_MS)
     return () => window.clearInterval(interval)
   }, [isPlaybackActive, radar.frames])
+
+  useEffect(() => {
+    if (!isSatellitePlaybackActive) return
+    const interval = window.setInterval(() => {
+      setSelectedSatelliteFrameId((currentId) => {
+        const frames = satelliteHistory.frames
+        const currentIndex = currentId
+          ? frames.findIndex((frame) => frame.id === currentId)
+          : frames.length - 1
+        const activeIndex = currentIndex >= 0 ? currentIndex : frames.length - 1
+        for (let offset = 1; offset <= frames.length; offset += 1) {
+          const nextIndex = (activeIndex + offset) % frames.length
+          const nextFrame = frames[nextIndex]
+          if (nextFrame && !failedSatelliteFrameIds.has(nextFrame.id)) {
+            return nextFrame.id
+          }
+        }
+        return currentId
+      })
+    }, SATELLITE_PLAYBACK_INTERVAL_MS)
+    return () => window.clearInterval(interval)
+  }, [
+    failedSatelliteFrameIds,
+    isSatellitePlaybackActive,
+    satelliteHistory.frames,
+  ])
+
+  const handleSatelliteFrameError = useCallback((frameId: string) => {
+    setFailedSatelliteFrameIds((current) => {
+      if (current.has(frameId)) return current
+      const next = new Set(current)
+      next.add(frameId)
+      return next
+    })
+  }, [])
 
   return (
     <main className="app-shell">
@@ -270,7 +360,11 @@ function App() {
         </div>
       </header>
       <WeatherMap
-        buildSatelliteImageRequest={satellite.buildImageRequest}
+        buildSatelliteImageRequest={
+          displayedSatelliteFrame?.source === 'archive'
+            ? satelliteHistory.buildImageRequest
+            : satellite.buildImageRequest
+        }
         cloudCoverDataset={cloudCover.dataset}
         cloudCoverNotice={cloudCoverNotice}
         cloudCoverOpacity={cloudCoverOpacity}
@@ -278,12 +372,13 @@ function App() {
         loadCloudCoverViewport={cloudCover.loadViewport}
         mapMode={mapMode}
         onMapViewportChange={setMapViewport}
+        onSatelliteFrameError={handleSatelliteFrameError}
         onSmoothCloudStateChange={setSmoothCloudState}
         radarFrame={selectedFrame}
         radarPalette={radar.palette}
         radarNotice={radarNotice}
         radarOpacity={radarOpacity}
-        satelliteFrame={satellite.frame}
+        satelliteFrame={displayedSatelliteFrame}
         satelliteNotice={satelliteNotice}
         satelliteOpacity={satelliteOpacity}
         smoothCloudOpacity={smoothCloudOpacity}
@@ -308,12 +403,17 @@ function App() {
         cloudCoverStatus={cloudCover.status}
         frames={radar.frames}
         isPlaying={isPlaybackActive}
+        isSatellitePlaying={isSatellitePlaybackActive}
         mapMode={mapMode}
         nowMs={nowMs}
         radarOpacity={radarOpacity}
-        satelliteFrame={satellite.frame}
+        satelliteFrame={displayedSatelliteFrame}
+        satelliteFrames={satelliteHistory.frames}
         satelliteOpacity={satelliteOpacity}
-        satelliteStatus={satellite.status}
+        satelliteStatus={
+          mapMode === 'satellite' ? satelliteHistory.status : satellite.status
+        }
+        selectedSatelliteIndex={selectedSatelliteFrameIndex}
         selectedIndex={selectedFrameIndex}
         onChangeCloudCoverOpacity={setCloudCoverOpacity}
         onChangeOpacity={setRadarOpacity}
@@ -321,6 +421,12 @@ function App() {
         onChangeSmoothCloudOpacity={setSmoothCloudOpacity}
         onSelectFrame={(index) =>
           setSelectedFrameId(radar.frames[index]?.id ?? null)
+        }
+        onSelectSatelliteFrame={(index) =>
+          setSelectedSatelliteFrameId(satelliteHistory.frames[index]?.id ?? null)
+        }
+        onToggleSatellitePlayback={() =>
+          setIsSatellitePlaying((playing) => !playing)
         }
         onTogglePlayback={() => setIsPlaying((playing) => !playing)}
         smoothCloudOpacity={smoothCloudOpacity}
