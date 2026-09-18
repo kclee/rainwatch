@@ -22,6 +22,11 @@ import {
   MAX_FRAME_MATCH_DIFFERENCE_MS,
 } from './config/frameMatching'
 import { DEFAULT_SMOOTH_CLOUD_OPACITY } from './config/smoothCloud'
+import {
+  isMapModeEnabled,
+  MAP_MODE_STORAGE_KEY,
+  normalizeMapMode,
+} from './config/mapModes'
 import { useCloudCover } from './hooks/useCloudCover'
 import { useCloudImagery } from './hooks/useCloudImagery'
 import { useGeolocation } from './hooks/useGeolocation'
@@ -47,7 +52,13 @@ import { selectWindTarget } from './utils/wind'
 function App() {
   const { location, message, requestLocation, status } = useGeolocation()
   const radar = useRadarFrames()
-  const [mapMode, setMapMode] = useState<MapMode>('radar')
+  const [mapMode, setMapMode] = useState<MapMode>(() => {
+    try {
+      return normalizeMapMode(window.localStorage.getItem(MAP_MODE_STORAGE_KEY))
+    } catch {
+      return 'radar'
+    }
+  })
   const showRadar = mapMode === 'radar' || mapMode === 'both'
   const showSatellite = mapMode === 'satellite' || mapMode === 'both'
   const usesSatelliteHistory = mapMode === 'satellite' || mapMode === 'both'
@@ -187,20 +198,26 @@ function App() {
   const satelliteIsRefreshing =
     satellite.isRefreshing ||
     (usesSatelliteHistory && satelliteHistory.isRefreshing)
+  const satelliteIsLastAvailable =
+    usesSatelliteHistory && satelliteHistory.frames.length > 0
+      ? satelliteHistory.isLastAvailable
+      : satellite.isLastAvailable
   const satelliteUpdateLabel = satelliteIsRefreshing
     ? 'Satellite · Refreshing…'
-    : usesSatelliteHistory &&
-        (satelliteHistory.status === 'error' ||
-          satelliteHistory.status === 'empty') &&
-        satellite.frame
-      ? 'Satellite history · Latest only'
-      : usesSatelliteHistory && satelliteHistory.lastSuccessfulRefreshAt !== null
-        ? `Satellite history · ${formatMetadataRefreshTime(satelliteHistory.lastSuccessfulRefreshAt, nowMs)}`
-        : satellite.status === 'error' || satellite.status === 'empty'
-          ? 'Satellite · Unavailable'
-          : satellite.lastSuccessfulRefreshAt === null
-            ? 'Satellite · Not loaded'
-            : `Satellite · ${formatMetadataRefreshTime(satellite.lastSuccessfulRefreshAt, nowMs)}`
+    : satelliteIsLastAvailable
+      ? `Satellite · Last available${satelliteFreshness.ageMinutes === null ? '' : ` · ${satelliteFreshness.ageMinutes} min old`}`
+      : usesSatelliteHistory &&
+          (satelliteHistory.status === 'error' ||
+            satelliteHistory.status === 'empty') &&
+          satellite.frame
+        ? 'Satellite history · Latest only'
+        : usesSatelliteHistory && satelliteHistory.lastSuccessfulRefreshAt !== null
+          ? `Satellite history · ${formatMetadataRefreshTime(satelliteHistory.lastSuccessfulRefreshAt, nowMs)}`
+          : satellite.status === 'error' || satellite.status === 'empty'
+            ? 'Satellite · Unavailable'
+            : satellite.lastSuccessfulRefreshAt === null
+              ? 'Satellite · Not loaded'
+              : `Satellite · ${formatMetadataRefreshTime(satellite.lastSuccessfulRefreshAt, nowMs)}`
   const cloudCoverUpdateLabel = cloudCover.isRefreshing
     ? 'Cloud Cover · Refreshing…'
     : cloudCover.status === 'error' || cloudCover.status === 'empty'
@@ -290,6 +307,7 @@ function App() {
             : 'Refresh radar + satellite'
 
   function handleModeChange(nextMode: MapMode) {
+    if (!isMapModeEnabled(nextMode)) return
     setMapMode(nextMode)
     if (nextMode !== 'radar') {
       setIsPlaying(false)
@@ -298,6 +316,14 @@ function App() {
       setIsSatellitePlaying(false)
     }
   }
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(MAP_MODE_STORAGE_KEY, mapMode)
+    } catch {
+      // The selected mode still works when browser storage is unavailable.
+    }
+  }, [mapMode])
 
   function refreshVisibleData() {
     if (showRadar) void radar.refreshRadar()
@@ -479,6 +505,7 @@ function App() {
         satelliteFrame={displayedSatelliteFrame}
         satelliteFrames={satelliteHistory.frames}
         satelliteOpacity={satelliteOpacity}
+        satelliteIsLastAvailable={satelliteIsLastAvailable}
         satelliteStatus={
           usesSatelliteHistory ? satelliteHistory.status : satellite.status
         }

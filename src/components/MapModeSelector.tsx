@@ -1,4 +1,5 @@
 import type { MapMode } from '../types/weather'
+import { isMapModeEnabled } from '../config/mapModes'
 
 const modes: Array<{ value: MapMode; label: string }> = [
   { value: 'radar', label: 'Radar' },
@@ -16,17 +17,22 @@ interface MapModeSelectorProps {
 export function MapModeSelector({ value, onChange }: MapModeSelectorProps) {
   return (
     <div className="map-mode-selector" role="group" aria-label="Map mode">
-      {modes.map((mode) => (
-        <button
-          type="button"
-          key={mode.value}
-          className={value === mode.value ? 'is-active' : undefined}
-          aria-pressed={value === mode.value}
-          onClick={() => onChange(mode.value)}
-        >
-          {mode.label}
-        </button>
-      ))}
+      {modes.map((mode) => {
+        const isEnabled = isMapModeEnabled(mode.value)
+        return (
+          <button
+            type="button"
+            key={mode.value}
+            className={value === mode.value ? 'is-active' : undefined}
+            aria-pressed={isEnabled && value === mode.value}
+            disabled={!isEnabled}
+            title={!isEnabled ? 'Cloud Cover experiments paused' : undefined}
+            onClick={() => onChange(mode.value)}
+          >
+            {mode.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

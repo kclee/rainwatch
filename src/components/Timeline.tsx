@@ -26,6 +26,7 @@ interface TimelineProps {
   satelliteFrames: CloudFrame[]
   satelliteOpacity: number
   satelliteStatus: CloudStatus
+  satelliteIsLastAvailable: boolean
   cloudCoverDataset: CloudCoverDataset | null
   cloudCoverOpacity: number
   cloudCoverStatus: CloudCoverStatus
@@ -57,6 +58,7 @@ export function Timeline({
   satelliteFrames,
   satelliteOpacity,
   satelliteStatus,
+  satelliteIsLastAvailable,
   cloudCoverDataset,
   cloudCoverOpacity,
   cloudCoverStatus,
@@ -107,11 +109,13 @@ export function Timeline({
       : new Date(satelliteFrame.timestampMs)
   const satelliteRelativeLabel = satelliteDate
     ? `Satellite · ${
-        (mapMode === 'satellite' || mapMode === 'both') && satelliteFrames.length > 0
-          ? selectedSatelliteIndex === satelliteFrames.length - 1
-            ? 'Latest · '
-            : ''
-          : 'Latest · '
+        satelliteIsLastAvailable
+          ? 'Last available · '
+          : (mapMode === 'satellite' || mapMode === 'both') && satelliteFrames.length > 0
+            ? selectedSatelliteIndex === satelliteFrames.length - 1
+              ? 'Latest · '
+              : ''
+            : 'Latest · '
       }${formatRelativeTime(satelliteDate.getTime(), nowMs)}`
     : satelliteStatus === 'loading'
       ? 'Satellite · Loading…'

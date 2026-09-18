@@ -12,7 +12,10 @@ import {
 import type { GeoJSONSource, ImageSource, RasterTileSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import mapLibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { DEFAULT_CLOUD_OPACITY } from '../config/cloud'
+import {
+  DEFAULT_CLOUD_OPACITY,
+  SATELLITE_IMAGE_RETRY_DELAYS_MS,
+} from '../config/cloud'
 import { DEFAULT_CLOUD_COVER_OPACITY } from '../config/cloudCover'
 import { mapConfig } from '../config/map'
 import { DEFAULT_RADAR_OPACITY } from '../config/radar'
@@ -180,8 +183,16 @@ export function WeatherMap({
   const smoothCloudOpacityRef = useRef(smoothCloudOpacity)
   const smoothCloudValidTimeRef = useRef<number | null>(null)
   const smoothCloudStateChangeRef = useRef(onSmoothCloudStateChange)
-  const satelliteFrameRef = useRef(satelliteFrame)
   const satelliteFrameErrorRef = useRef(onSatelliteFrameError)
+  const satelliteImageRequestRef = useRef<{
+    key: string
+    frame: CloudFrame
+    request: CloudImageRequest
+  } | null>(null)
+  const satelliteImageRetryCountsRef = useRef(
+    new globalThis.Map<string, number>(),
+  )
+  const satelliteImageRetryTimerRef = useRef<number | null>(null)
   const cloudCoverData = useMemo(
     () => (cloudCoverDataset ? cloudCoverGeoJson(cloudCoverDataset) : null),
     [cloudCoverDataset],
@@ -198,10 +209,6 @@ export function WeatherMap({
   useEffect(() => {
     smoothCloudStateChangeRef.current = onSmoothCloudStateChange
   }, [onSmoothCloudStateChange])
-
-  useEffect(() => {
-    satelliteFrameRef.current = satelliteFrame
-  }, [satelliteFrame])
 
   useEffect(() => {
     satelliteFrameErrorRef.current = onSatelliteFrameError
@@ -237,8 +244,30 @@ export function WeatherMap({
         return
       }
       if ('sourceId' in event && event.sourceId === SATELLITE_SOURCE_ID) {
-        setSatelliteImageError('Satellite image could not be loaded. Other map layers remain available.')
-        const failedFrame = satelliteFrameRef.current
+        const activeImage = satelliteImageRequestRef.current
+        if (!activeImage) return
+        const retryCount = satelliteImageRetryCountsRef.current.get(activeImage.key) ?? 0
+        const retryDelay = SATELLITE_IMAGE_RETRY_DELAYS_MS[retryCount]
+        if (retryDelay !== undefined && satelliteImageRetryTimerRef.current === null) {
+          satelliteImageRetryCountsRef.current.set(activeImage.key, retryCount + 1)
+          setSatelliteImageError('Satellite image failed. Retrying…')
+          console.warn(
+            `Retrying Satellite image (attempt ${retryCount + 2}; rendering).`,
+            event.error,
+          )
+          satelliteImageRetryTimerRef.current = window.setTimeout(() => {
+            satelliteImageRetryTimerRef.current = null
+            const currentImage = satelliteImageRequestRef.current
+            if (currentImage?.key !== activeImage.key) return
+            const source = map.getSource(SATELLITE_SOURCE_ID) as ImageSource | undefined
+            source?.updateImage(currentImage.request)
+          }, retryDelay)
+          return
+        }
+        if (satelliteImageRetryTimerRef.current !== null) return
+        setSatelliteImageError('Satellite image could not be rendered. Other map layers remain available.')
+        console.warn('Satellite image failed after retries.', event.error)
+        const failedFrame = activeImage.frame
         if (failedFrame?.source === 'archive') {
           satelliteFrameErrorRef.current(failedFrame.id)
         }
@@ -268,7 +297,11 @@ export function WeatherMap({
       if (event.sourceId === RADAR_SOURCE_ID && event.isSourceLoaded) {
         setRadarTileError(null)
       }
-      if (event.sourceId === SATELLITE_SOURCE_ID && event.isSourceLoaded) setSatelliteImageError(null)
+      if (event.sourceId === SATELLITE_SOURCE_ID && event.isSourceLoaded) {
+        const activeImage = satelliteImageRequestRef.current
+        if (activeImage) satelliteImageRetryCountsRef.current.delete(activeImage.key)
+        setSatelliteImageError(null)
+      }
       if (event.sourceId === CLOUD_COVER_SOURCE_ID && event.isSourceLoaded) setCloudCoverLayerError(null)
       if (
         event.sourceId === SMOOTH_CLOUD_SOURCE_ID &&
@@ -286,6 +319,10 @@ export function WeatherMap({
 
     mapRef.current = map
     return () => {
+      if (satelliteImageRetryTimerRef.current !== null) {
+        window.clearTimeout(satelliteImageRetryTimerRef.current)
+        satelliteImageRetryTimerRef.current = null
+      }
       resizeObserver.disconnect()
       locationMarkerRef.current?.remove()
       locationMarkerRef.current = null
@@ -352,6 +389,7 @@ export function WeatherMap({
     if (!map || !isMapReady) return
 
     if ((mapMode !== 'satellite' && mapMode !== 'both') || !satelliteFrame) {
+      satelliteImageRequestRef.current = null
       if (map.getLayer(SATELLITE_LAYER_ID)) map.removeLayer(SATELLITE_LAYER_ID)
       if (map.getSource(SATELLITE_SOURCE_ID)) map.removeSource(SATELLITE_SOURCE_ID)
       return
@@ -366,10 +404,16 @@ export function WeatherMap({
         width: container.clientWidth, height: container.clientHeight, pixelRatio: window.devicePixelRatio,
       })
       if (!request) {
+        satelliteImageRequestRef.current = null
         panelRef.current?.removeAttribute('data-satellite-image-url')
         if (map.getLayer(SATELLITE_LAYER_ID)) map.removeLayer(SATELLITE_LAYER_ID)
         if (map.getSource(SATELLITE_SOURCE_ID)) map.removeSource(SATELLITE_SOURCE_ID)
         return
+      }
+      satelliteImageRequestRef.current = {
+        key: `${satelliteFrame.id}:${request.url}`,
+        frame: satelliteFrame,
+        request,
       }
       panelRef.current?.setAttribute('data-satellite-image-url', request.url)
       const existingSource = map.getSource(SATELLITE_SOURCE_ID) as ImageSource | undefined

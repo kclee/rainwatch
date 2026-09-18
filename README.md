@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is built incrementally as a static client-side web app. Version 0.2f makes Radar + Satellite historically meaningful by matching each selected Satellite observation to the closest available Radar observation.
+The application is built incrementally as a static client-side web app. Version 0.2g hardens Satellite failure handling and pauses the two Cloud Cover experiments while their implementations remain available for later work.
 
 ## Built through human-AI collaboration
 
@@ -13,6 +13,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-18-0.2g.md`](docs/journal/2026-09-18-0.2g.md) records bounded Satellite retries, last-available behavior, paused experiment controls, and verification.
 - [`docs/journal/2026-09-18-0.2f.md`](docs/journal/2026-09-18-0.2f.md) records combined timestamp matching, bandwidth, failure handling, and verification.
 - [`docs/journal/2026-09-17-0.2e.md`](docs/journal/2026-09-17-0.2e.md) records the historical satellite-animation milestone, bandwidth measurements, and verification.
 - [`docs/journal/2026-09-17-0.2d.md`](docs/journal/2026-09-17-0.2d.md) records the current surface-wind milestone and its verification.
@@ -26,7 +27,9 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2f (`0.2.0-beta.6`) is implemented and deployed. Radar + Satellite uses the existing three-hour Satellite timeline as its single reference playhead. For every selected Satellite frame, a provider-agnostic utility selects the closest Radar frame, shows both exact timestamps, and reports their absolute difference as Close, Moderate, or Large. Standalone Radar and standalone Satellite retain their existing independent controls.
+RainWatch 0.2g (`0.2.0-beta.7`) is implemented and deployed. Satellite metadata now retries transient network, timeout, retryable HTTP, and provider failures twice with short backoff. Image rendering retries once. Permanent HTTP/provider failures do not retry, all loops are bounded, and the last valid latest image or history remains visible after a failed refresh with an explicit **Last available** label and its real observation age.
+
+Radar, Satellite, and Radar + Satellite remain active. Cloud Cover and Smooth Cloud · Lab stay visible but are disabled and labelled as paused. Their providers, hooks, UI, tests, documentation, and research artifacts remain in the repository; a stored paused mode safely falls back to Radar.
 
 Live verification found both providers publishing at ten-minute intervals, with overlapping NOAA archive records ending at `:09/:19/...` and RainViewer records at `:10/:20/...`; normal matches were therefore one minute apart. RainWatch treats five minutes or less as Close, six through fifteen minutes as Moderate, and more than fifteen minutes as Large. Fifteen minutes is the configurable acceptable-match ceiling: it tolerates one missing/offset publication but not two. Equal-distance matches deterministically choose the earlier observation.
 
@@ -123,6 +126,8 @@ Combined matching lives in `src/utils/frameMatching.ts`, outside providers and J
 
 Opening Satellite mode downloads archive metadata and only the selected image. Frames are requested lazily as the user selects them or playback reaches them; opacity changes do not request a replacement. Archive image URLs use a 40-entry, 24-hour CacheFirst PWA runtime cache, so a previously loaded frame/viewport can be reused during a loop. A map pan changes the viewport and therefore requires one new image for the selected frame. If the archive is unavailable, RainWatch keeps the current-image provider as a visible fallback. A failed individual archive image is marked so playback can skip it.
 
+Latest and archive metadata use the same bounded reliability policy: two automatic retries after 750 ms and 1.5 seconds, with a 12-second timeout per attempt. HTTP 408, 429, and 5xx responses are retryable; other 4xx responses and explicit permanent provider errors are not. Map image rendering receives one retry after one second. Debug warnings retain the failure category, while user messages remain compact. Manual Refresh starts a new bounded attempt.
+
 In the 2026-09-17 whole-USA desktop measurement, archive metadata was 4,457 bytes and the selected frame was 1,220,441 bytes (about 1.16 MiB). The 19-frame, three-hour window totaled 25,220,500 image bytes plus metadata (about 24.06 MiB) only after every frame had been viewed. Individual frames ranged from 1,220,441 to 1,367,006 bytes. One representative pan added 1,361,804 bytes (about 1.30 MiB) for the selected frame. These figures vary with viewport size, device pixel ratio, image content, and current frame cadence.
 
 The 2026-09-18 combined-mode measurement used the same default whole-USA extent. Entering Radar + Satellite from Satellite added 10 Radar tiles totaling 97,188 bytes (about 95 KiB). Three additional matched frames added 294,550 bytes (about 96 KiB each). One full 18-frame Satellite loop had 12 Radar matches and six older Satellite-only frames; the 120 unique matched Radar tiles totaled 1,177,347 bytes (about 1.12 MiB) beyond standalone Satellite playback. Revisited Radar tile URLs completed in roughly 3–7 ms in the test browser; RainViewer supplied a two-day browser cache lifetime, while RainWatch's service-worker strategy remained unchanged and network-only for Radar.
@@ -141,7 +146,7 @@ The development basemap is configured in `src/config/map.ts`. It currently uses 
 
 MapLibre's module worker is bundled explicitly through Vite so vector roads, boundaries, and place labels work in both development and the production GitHub Pages build.
 
-No backend server, database, authentication system, or API key is required for version 0.2f.
+No backend server, database, authentication system, or API key is required for version 0.2g.
 
 ## Known limitations
 
@@ -154,6 +159,8 @@ No backend server, database, authentication system, or API key is required for v
 - The intensity legend is a compact visual guide to RainViewer's Universal Blue reflectivity palette; it does not convert colors into exact rainfall rates.
 - Radar is marked delayed when the newest frame is at least 30 minutes old. This threshold represents roughly three missed updates at RainViewer's current typical cadence and may need adjustment if that cadence changes.
 - Manual refresh updates radar metadata. A failed refresh keeps already-loaded frames visible and labels them as the last available data; an empty successful response removes the radar overlay.
+- Satellite retry delays are deliberately short and bounded. A prolonged NOAA outage still requires manual Refresh later; RainWatch does not poll or retry forever.
+- Cloud Cover and Smooth Cloud · Lab are temporarily disabled in the selector. Their retained experimental implementations are not part of the active 0.2g product surface.
 - NOAA GeoColor is satellite imagery rather than an exact cloud-cover percentage. It uses visible-color information by day and infrared/multispectral rendering at night, so its appearance changes after dark.
 - Open-Meteo Cloud Cover is forecast-model output rather than observed satellite imagery. The current value is represented at a 15-minute interval; outside supported 15-minute model regions it may be interpolated from hourly data.
 - Open-Meteo Best Match is globally available and may combine different regional models. The generic response does not identify one fixed model name for every sampled point.

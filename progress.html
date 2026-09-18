@@ -54,7 +54,7 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2f deployed · Matched Radar + Satellite history active</span>
+      <span class="status">Version 0.2g deployed · Satellite reliability cleanup active</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.2f uses the Satellite timeline as the single Radar + Satellite playhead and automatically selects the closest Radar observation. Both exact times and their difference remain visible; matching timestamps does not make the two sensors meteorologically equivalent.</p>
+        <p>Version 0.2g adds bounded Satellite metadata and image retries, keeps last-valid imagery visible after refresh failures, and temporarily disables both Cloud Cover experiment buttons without deleting their implementations.</p>
       </article>
 
       <article class="card">
@@ -104,6 +104,10 @@
           <li class="done">Actual NOAA rolling-archive record discovery</li>
           <li class="done">Three-hour historical Satellite slider and timestamps</li>
           <li class="done">Satellite Previous, Next, Play, Pause, Home, and End</li>
+          <li class="done">Bounded Satellite metadata and image retries</li>
+          <li class="done">Last-available Satellite image and history preservation</li>
+          <li class="done">Compact categorized Satellite failure messages</li>
+          <li class="done">Paused Cloud Cover controls with Radar fallback</li>
           <li class="done">Newest-first selection and independent playback state</li>
           <li class="done">Latest-only Radar + Satellite mode preserved</li>
           <li class="done">Lazy frame loading and failed-frame playback skipping</li>
@@ -286,7 +290,7 @@
     </section>
 
     <footer>
-      Version 0.2f evidence: <a href="docs/journal/2026-09-18-0.2f.md">docs/journal/2026-09-18-0.2f.md</a>. Version 0.2e evidence: <a href="docs/journal/2026-09-17-0.2e.md">docs/journal/2026-09-17-0.2e.md</a>. Updated 2026-09-18.
+      Version 0.2g evidence: <a href="docs/journal/2026-09-18-0.2g.md">docs/journal/2026-09-18-0.2g.md</a>. Version 0.2f evidence: <a href="docs/journal/2026-09-18-0.2f.md">docs/journal/2026-09-18-0.2f.md</a>. Updated 2026-09-18.
     </footer>
   </main>
 </body>

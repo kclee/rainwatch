@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CLOUD_REQUEST_TIMEOUT_MS } from '../config/cloud'
 import { NoaaGoesArchiveProvider } from '../services/cloud/NoaaGoesArchiveProvider'
+import {
+  satelliteFailureMessage,
+  withSatelliteRetry,
+} from '../services/cloud/satelliteRequest'
 import type { CloudFrame, CloudStatus, CloudViewport } from '../types/weather'
 
 const archiveProvider = new NoaaGoesArchiveProvider()
@@ -12,6 +15,7 @@ interface SatelliteHistoryState {
   isRefreshing: boolean
   lastSuccessfulRefreshAt: number | null
   refreshError: string | null
+  isLastAvailable: boolean
 }
 
 const initialState: SatelliteHistoryState = {
@@ -21,6 +25,7 @@ const initialState: SatelliteHistoryState = {
   isRefreshing: false,
   lastSuccessfulRefreshAt: null,
   refreshError: null,
+  isLastAvailable: false,
 }
 
 export function useSatelliteHistory(enabled: boolean) {
@@ -33,12 +38,6 @@ export function useSatelliteHistory(enabled: boolean) {
 
     const controller = new AbortController()
     requestControllerRef.current = controller
-    let didTimeOut = false
-    const timeout = window.setTimeout(() => {
-      didTimeOut = true
-      controller.abort()
-    }, CLOUD_REQUEST_TIMEOUT_MS)
-
     setState((current) => ({
       ...current,
       status: current.frames.length ? 'ready' : 'loading',
@@ -50,18 +49,39 @@ export function useSatelliteHistory(enabled: boolean) {
     }))
 
     try {
-      const frames = await archiveProvider.getRecentFrames(controller.signal)
+      const frames = await withSatelliteRetry(
+        (signal) => archiveProvider.getRecentFrames(signal),
+        {
+          signal: controller.signal,
+          onRetry: (failure, nextAttempt) =>
+            console.warn(
+              `Retrying Satellite history metadata (attempt ${nextAttempt}; ${failure.category}).`,
+              failure,
+            ),
+        },
+      )
       if (!isMountedRef.current) return
       const refreshedAt = Date.now()
       if (!frames.length) {
-        setState({
-          status: 'empty',
-          frames: [],
-          message: 'Satellite history unavailable. NOAA returned no recent frames.',
-          isRefreshing: false,
-          lastSuccessfulRefreshAt: refreshedAt,
-          refreshError: null,
-        })
+        setState((current) =>
+          current.frames.length
+            ? {
+                ...current,
+                status: 'ready',
+                isRefreshing: false,
+                refreshError: 'NOAA has no recent Satellite history. Showing Last available.',
+                isLastAvailable: true,
+              }
+            : {
+                status: 'empty',
+                frames: [],
+                message: 'Satellite history unavailable. NOAA returned no recent frames.',
+                isRefreshing: false,
+                lastSuccessfulRefreshAt: refreshedAt,
+                refreshError: null,
+                isLastAvailable: false,
+              },
+        )
         return
       }
 
@@ -72,24 +92,23 @@ export function useSatelliteHistory(enabled: boolean) {
         isRefreshing: false,
         lastSuccessfulRefreshAt: refreshedAt,
         refreshError: null,
+        isLastAvailable: false,
       })
     } catch (error: unknown) {
       if (!isMountedRef.current) return
-      const reason = didTimeOut
-        ? 'The NOAA satellite archive request timed out.'
-        : navigator.onLine
-          ? error instanceof Error
-            ? error.message
-            : 'NOAA satellite history could not be reached.'
-          : 'The browser is offline.'
-
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      console.warn('Satellite history metadata failed after retries.', error)
+      const reason = navigator.onLine
+        ? satelliteFailureMessage(error)
+        : 'Browser is offline.'
       setState((current) =>
         current.frames.length
           ? {
               ...current,
               status: 'ready',
               isRefreshing: false,
-              refreshError: `${reason} Showing the last available history.`,
+              refreshError: `${reason} Showing Last available history.`,
+              isLastAvailable: true,
             }
           : {
               ...current,
@@ -98,10 +117,10 @@ export function useSatelliteHistory(enabled: boolean) {
               message: `Satellite history unavailable. ${reason}`,
               isRefreshing: false,
               refreshError: null,
+              isLastAvailable: false,
             },
       )
     } finally {
-      window.clearTimeout(timeout)
       if (requestControllerRef.current === controller) {
         requestControllerRef.current = null
       }

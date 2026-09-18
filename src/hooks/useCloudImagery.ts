@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CLOUD_REQUEST_TIMEOUT_MS } from '../config/cloud'
 import { NoaaGoesCloudProvider } from '../services/cloud/NoaaGoesCloudProvider'
+import {
+  satelliteFailureMessage,
+  withSatelliteRetry,
+} from '../services/cloud/satelliteRequest'
 import type { CloudFrame, CloudStatus, CloudViewport } from '../types/weather'
 
 const cloudProvider = new NoaaGoesCloudProvider()
@@ -12,6 +15,7 @@ interface CloudState {
   isRefreshing: boolean
   lastSuccessfulRefreshAt: number | null
   refreshError: string | null
+  isLastAvailable: boolean
 }
 
 const initialState: CloudState = {
@@ -21,6 +25,7 @@ const initialState: CloudState = {
   isRefreshing: false,
   lastSuccessfulRefreshAt: null,
   refreshError: null,
+  isLastAvailable: false,
 }
 
 export function useCloudImagery(enabled: boolean) {
@@ -29,18 +34,10 @@ export function useCloudImagery(enabled: boolean) {
   const requestControllerRef = useRef<AbortController | null>(null)
 
   const refreshCloud = useCallback(async () => {
-    if (requestControllerRef.current) {
-      return
-    }
+    if (requestControllerRef.current) return
 
     const controller = new AbortController()
     requestControllerRef.current = controller
-    let didTimeOut = false
-    const timeout = window.setTimeout(() => {
-      didTimeOut = true
-      controller.abort()
-    }, CLOUD_REQUEST_TIMEOUT_MS)
-
     setState((current) => ({
       ...current,
       status: current.frame ? 'ready' : 'loading',
@@ -50,21 +47,40 @@ export function useCloudImagery(enabled: boolean) {
     }))
 
     try {
-      const frame = await cloudProvider.getLatestFrame(controller.signal)
-      if (!isMountedRef.current) {
-        return
-      }
+      const frame = await withSatelliteRetry(
+        (signal) => cloudProvider.getLatestFrame(signal),
+        {
+          signal: controller.signal,
+          onRetry: (failure, nextAttempt) =>
+            console.warn(
+              `Retrying latest Satellite metadata (attempt ${nextAttempt}; ${failure.category}).`,
+              failure,
+            ),
+        },
+      )
+      if (!isMountedRef.current) return
 
       const refreshedAt = Date.now()
       if (!frame) {
-        setState({
-          status: 'empty',
-          frame: null,
-          message: 'Satellite imagery unavailable. NOAA returned no latest image.',
-          isRefreshing: false,
-          lastSuccessfulRefreshAt: refreshedAt,
-          refreshError: null,
-        })
+        setState((current) =>
+          current.frame
+            ? {
+                ...current,
+                status: 'ready',
+                isRefreshing: false,
+                refreshError: 'NOAA has no current Satellite image. Showing Last available.',
+                isLastAvailable: true,
+              }
+            : {
+                status: 'empty',
+                frame: null,
+                message: 'Satellite unavailable. NOAA returned no current image.',
+                isRefreshing: false,
+                lastSuccessfulRefreshAt: refreshedAt,
+                refreshError: null,
+                isLastAvailable: false,
+              },
+        )
         return
       }
 
@@ -75,39 +91,35 @@ export function useCloudImagery(enabled: boolean) {
         isRefreshing: false,
         lastSuccessfulRefreshAt: refreshedAt,
         refreshError: null,
+        isLastAvailable: false,
       })
     } catch (error: unknown) {
-      if (!isMountedRef.current) {
-        return
-      }
-
-      const reason = didTimeOut
-        ? 'The NOAA satellite request timed out.'
-        : navigator.onLine
-          ? error instanceof Error
-            ? error.message
-            : 'NOAA satellite imagery could not be reached.'
-          : 'The browser is offline.'
-
+      if (!isMountedRef.current) return
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      console.warn('Latest Satellite metadata failed after retries.', error)
+      const reason = navigator.onLine
+        ? satelliteFailureMessage(error)
+        : 'Browser is offline.'
       setState((current) =>
         current.frame
           ? {
               ...current,
               status: 'ready',
               isRefreshing: false,
-              refreshError: `${reason} Showing the last available satellite image.`,
+              refreshError: `${reason} Showing Last available.`,
+              isLastAvailable: true,
             }
           : {
               ...current,
               status: 'error',
               frame: null,
-              message: `Satellite imagery unavailable. ${reason}`,
+              message: `Satellite unavailable. ${reason}`,
               isRefreshing: false,
               refreshError: null,
+              isLastAvailable: false,
             },
       )
     } finally {
-      window.clearTimeout(timeout)
       if (requestControllerRef.current === controller) {
         requestControllerRef.current = null
       }
@@ -125,10 +137,7 @@ export function useCloudImagery(enabled: boolean) {
   }, [])
 
   useEffect(() => {
-    if (!enabled || state.status !== 'idle') {
-      return
-    }
-
+    if (!enabled || state.status !== 'idle') return
     const initialRequest = window.setTimeout(() => void refreshCloud(), 0)
     return () => window.clearTimeout(initialRequest)
   }, [enabled, refreshCloud, state.status])

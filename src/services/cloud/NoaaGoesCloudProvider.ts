@@ -5,6 +5,7 @@ import type {
 } from '../../types/weather'
 import type { CloudProvider } from './CloudProvider'
 import { buildNoaaImageRequest } from './noaaImageRequest.ts'
+import { satelliteHttpError, satelliteProviderError } from './satelliteRequest.ts'
 
 const SERVICE_URL =
   'https://satellitemaps.nesdis.noaa.gov/arcgis/rest/services/Most_Recent_MERGEDGC/ImageServer'
@@ -16,6 +17,7 @@ interface NoaaFeature {
 interface NoaaQueryResponse {
   features?: unknown
   error?: {
+    code?: unknown
     message?: unknown
   }
 }
@@ -71,7 +73,7 @@ export class NoaaGoesCloudProvider implements CloudProvider {
 
     const response = await this.fetcher(queryUrl, { signal })
     if (!response.ok) {
-      throw new Error(`NOAA satellite metadata request failed (${response.status}).`)
+      throw satelliteHttpError(response.status, 'NOAA Satellite metadata request')
     }
 
     const payload = (await response.json()) as NoaaQueryResponse
@@ -80,7 +82,12 @@ export class NoaaGoesCloudProvider implements CloudProvider {
         typeof payload.error.message === 'string'
           ? ` ${payload.error.message}`
           : ''
-      throw new Error(`NOAA satellite service returned an error.${detail}`)
+      const code = payload.error.code
+      const retryable = typeof code !== 'number' || code >= 500
+      throw satelliteProviderError(
+        `NOAA Satellite service returned an error.${detail}`,
+        retryable,
+      )
     }
 
     const features = Array.isArray(payload.features)

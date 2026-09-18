@@ -9,6 +9,7 @@ import type {
   CloudViewport,
 } from '../../types/weather'
 import { buildNoaaImageRequest } from './noaaImageRequest.ts'
+import { satelliteHttpError, satelliteProviderError } from './satelliteRequest.ts'
 
 const SERVICE_URL =
   'https://satellitemaps.nesdis.noaa.gov/arcgis/rest/services/MERGEDGC_Last_24hr/ImageServer'
@@ -19,7 +20,7 @@ interface NoaaFeature {
 
 interface NoaaQueryResponse {
   features?: unknown
-  error?: { message?: unknown }
+  error?: { code?: unknown; message?: unknown }
 }
 
 function parseFrame(value: unknown): CloudFrame | null {
@@ -69,7 +70,7 @@ export class NoaaGoesArchiveProvider {
 
     const response = await this.fetcher(queryUrl, { signal })
     if (!response.ok) {
-      throw new Error(`NOAA satellite archive request failed (${response.status}).`)
+      throw satelliteHttpError(response.status, 'NOAA Satellite archive request')
     }
 
     const payload = (await response.json()) as NoaaQueryResponse
@@ -78,7 +79,12 @@ export class NoaaGoesArchiveProvider {
         typeof payload.error.message === 'string'
           ? ` ${payload.error.message}`
           : ''
-      throw new Error(`NOAA satellite archive returned an error.${detail}`)
+      const code = payload.error.code
+      const retryable = typeof code !== 'number' || code >= 500
+      throw satelliteProviderError(
+        `NOAA Satellite archive returned an error.${detail}`,
+        retryable,
+      )
     }
 
     const frames = (Array.isArray(payload.features)
