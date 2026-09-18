@@ -21,6 +21,12 @@ export interface RadarFrame {
 
 export type RadarStatus = 'loading' | 'ready' | 'empty' | 'error'
 
+export type FrameMatchQuality =
+  | 'close'
+  | 'moderate'
+  | 'large'
+  | 'unavailable'
+
 export type RadarFreshnessStatus = 'fresh' | 'stale' | 'unavailable'
 
 export interface RadarLegendItem {

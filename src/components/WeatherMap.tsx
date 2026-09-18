@@ -265,7 +265,9 @@ export function WeatherMap({
     })
 
     map.on('sourcedata', (event) => {
-      if (event.sourceId === RADAR_SOURCE_ID && event.isSourceLoaded) setRadarTileError(null)
+      if (event.sourceId === RADAR_SOURCE_ID && event.isSourceLoaded) {
+        setRadarTileError(null)
+      }
       if (event.sourceId === SATELLITE_SOURCE_ID && event.isSourceLoaded) setSatelliteImageError(null)
       if (event.sourceId === CLOUD_COVER_SOURCE_ID && event.isSourceLoaded) setCloudCoverLayerError(null)
       if (
@@ -658,6 +660,7 @@ export function WeatherMap({
       data-cloud-cover-response-ms={cloudCoverDataset?.responseDurationMs}
       data-cloud-cover-processing-ms={cloudCoverDataset?.processingDurationMs}
       data-cloud-cover-fetched-at={cloudCoverDataset?.fetchedAtMs}
+      data-radar-frame-id={radarFrame?.id}
       data-satellite-frame-id={satelliteFrame?.id}
       data-satellite-frame-source={satelliteFrame?.source}
     >

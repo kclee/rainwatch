@@ -17,6 +17,10 @@ import {
   RADAR_CLOCK_UPDATE_INTERVAL_MS,
   RADAR_PLAYBACK_INTERVAL_MS,
 } from './config/radar'
+import {
+  MAX_FRAME_MATCH_DIFFERENCE_MINUTES,
+  MAX_FRAME_MATCH_DIFFERENCE_MS,
+} from './config/frameMatching'
 import { DEFAULT_SMOOTH_CLOUD_OPACITY } from './config/smoothCloud'
 import { useCloudCover } from './hooks/useCloudCover'
 import { useCloudImagery } from './hooks/useCloudImagery'
@@ -26,12 +30,14 @@ import { useSatelliteHistory } from './hooks/useSatelliteHistory'
 import { useWind } from './hooks/useWind'
 import type {
   CloudCoverViewport,
+  FrameMatchQuality,
   MapMode,
   SmoothCloudState,
 } from './types/weather'
 import { selectCloudCoverSummary } from './utils/cloudCoverGrid'
 import { getCloudCoverFreshness } from './utils/cloudCoverTime'
 import { getCloudFreshness } from './utils/cloudTime'
+import { closestFrame, frameMatchQuality } from './utils/frameMatching'
 import {
   formatMetadataRefreshTime,
   getRadarFreshness,
@@ -44,13 +50,14 @@ function App() {
   const [mapMode, setMapMode] = useState<MapMode>('radar')
   const showRadar = mapMode === 'radar' || mapMode === 'both'
   const showSatellite = mapMode === 'satellite' || mapMode === 'both'
+  const usesSatelliteHistory = mapMode === 'satellite' || mapMode === 'both'
   const showCloudCover = mapMode === 'cloud-cover'
   const showSmoothCloud = mapMode === 'smooth-cloud'
   const cloudCoverGridSizeOverride = parseCloudCoverGridSize(
     window.location.search,
   )
   const satellite = useCloudImagery(showSatellite)
-  const satelliteHistory = useSatelliteHistory(mapMode === 'satellite')
+  const satelliteHistory = useSatelliteHistory(usesSatelliteHistory)
   const cloudCover = useCloudCover(showCloudCover, cloudCoverGridSizeOverride)
   const [mapViewport, setMapViewport] = useState<CloudCoverViewport | null>(null)
   const windTarget = useMemo(
@@ -105,13 +112,51 @@ function App() {
   const selectedSatelliteHistoryFrame =
     satelliteHistory.frames[selectedSatelliteFrameIndex] ?? null
   const displayedSatelliteFrame =
-    mapMode === 'satellite'
+    usesSatelliteHistory
       ? selectedSatelliteHistoryFrame ?? satellite.frame
       : satellite.frame
   const newestSatelliteFrame =
-    mapMode === 'satellite'
+    usesSatelliteHistory
       ? satelliteHistory.frames.at(-1) ?? satellite.frame
       : satellite.frame
+  const combinedReferenceFrame =
+    selectedSatelliteHistoryFrame ?? (mapMode === 'both' ? satellite.frame : null)
+  const closestRadarMatch = useMemo(
+    () =>
+      combinedReferenceFrame?.timestampMs === null ||
+      combinedReferenceFrame?.timestampMs === undefined
+        ? null
+        : closestFrame(
+            combinedReferenceFrame.timestampMs,
+            radar.frames,
+            (frame) => frame.timestampSeconds * 1000,
+          ),
+    [combinedReferenceFrame, radar.frames],
+  )
+  const combinedReferenceTimestampMs = combinedReferenceFrame?.timestampMs ?? null
+  const radarWindowStartMs = radar.frames[0]?.timestampSeconds
+    ? radar.frames[0].timestampSeconds * 1000
+    : null
+  const radarWindowEndMs = radar.frames.at(-1)?.timestampSeconds
+    ? (radar.frames.at(-1)?.timestampSeconds ?? 0) * 1000
+    : null
+  const referenceOutsideRadarWindow =
+    combinedReferenceTimestampMs !== null &&
+    radarWindowStartMs !== null &&
+    radarWindowEndMs !== null &&
+    (combinedReferenceTimestampMs < radarWindowStartMs ||
+      combinedReferenceTimestampMs > radarWindowEndMs)
+  const omitOutsideWindowRadar =
+    referenceOutsideRadarWindow &&
+    (closestRadarMatch?.differenceMs ?? Number.POSITIVE_INFINITY) >
+      MAX_FRAME_MATCH_DIFFERENCE_MS
+  const matchedRadarFrame = omitOutsideWindowRadar
+    ? null
+    : closestRadarMatch?.frame ?? null
+  const combinedMatchQuality: FrameMatchQuality = frameMatchQuality(
+    matchedRadarFrame ? closestRadarMatch?.differenceMs ?? null : null,
+  )
+  const displayedRadarFrame = mapMode === 'both' ? matchedRadarFrame : selectedFrame
   const freshness = getRadarFreshness(
     radar.latestFrame?.timestampSeconds ?? null,
     nowMs,
@@ -141,15 +186,15 @@ function App() {
     : `Radar · ${formatMetadataRefreshTime(radar.lastSuccessfulRefreshAt, nowMs)}`
   const satelliteIsRefreshing =
     satellite.isRefreshing ||
-    (mapMode === 'satellite' && satelliteHistory.isRefreshing)
+    (usesSatelliteHistory && satelliteHistory.isRefreshing)
   const satelliteUpdateLabel = satelliteIsRefreshing
     ? 'Satellite · Refreshing…'
-    : mapMode === 'satellite' &&
+    : usesSatelliteHistory &&
         (satelliteHistory.status === 'error' ||
           satelliteHistory.status === 'empty') &&
         satellite.frame
       ? 'Satellite history · Latest only'
-      : mapMode === 'satellite' && satelliteHistory.lastSuccessfulRefreshAt !== null
+      : usesSatelliteHistory && satelliteHistory.lastSuccessfulRefreshAt !== null
         ? `Satellite history · ${formatMetadataRefreshTime(satelliteHistory.lastSuccessfulRefreshAt, nowMs)}`
         : satellite.status === 'error' || satellite.status === 'empty'
           ? 'Satellite · Unavailable'
@@ -181,13 +226,17 @@ function App() {
         ? `Radar data may be delayed. Latest frame is ${freshness.ageMinutes} min old.`
         : null
   const satelliteNotice =
-    mapMode === 'satellite' && satelliteHistory.refreshError
+    usesSatelliteHistory && satelliteHistory.refreshError
       ? satelliteHistory.refreshError
-      : mapMode === 'satellite' &&
+      : usesSatelliteHistory &&
           (satelliteHistory.status === 'error' ||
             satelliteHistory.status === 'empty') &&
           satellite.frame
         ? `${satelliteHistory.message} Showing the current latest image instead.`
+        : usesSatelliteHistory && selectedSatelliteHistoryFrame
+          ? satelliteFreshness.status === 'stale'
+            ? `Satellite imagery may be delayed. Latest image is ${satelliteFreshness.ageMinutes} min old.`
+            : null
         : satellite.refreshError
           ? satellite.refreshError
           : satellite.status === 'error' || satellite.status === 'empty'
@@ -197,6 +246,20 @@ function App() {
               : satelliteFreshness.status === 'stale'
                 ? `Satellite imagery may be delayed. Latest image is ${satelliteFreshness.ageMinutes} min old.`
                 : null
+  const combinedMatchNotice =
+    mapMode !== 'both'
+      ? null
+      : !combinedReferenceFrame
+        ? 'Satellite imagery is unavailable. Radar remains visible.'
+        : radar.frames.length === 0
+          ? 'Matched radar unavailable. Satellite remains visible.'
+          : !matchedRadarFrame
+            ? `No radar observation is within ${MAX_FRAME_MATCH_DIFFERENCE_MINUTES} min of this Satellite frame. Satellite remains visible.`
+            : combinedMatchQuality === 'large'
+              ? `Radar and Satellite observations differ by ${Math.round((closestRadarMatch?.differenceMs ?? 0) / 60_000)} min. Treat this as a poor time match.`
+              : null
+  const displayedRadarNotice =
+    mapMode === 'both' ? radarNotice ?? combinedMatchNotice : radarNotice
   const cloudCoverNotice = cloudCover.refreshError
     ? cloudCover.refreshError
     : cloudCover.status === 'error' || cloudCover.status === 'empty'
@@ -204,10 +267,11 @@ function App() {
       : cloudCoverFreshness.status === 'stale'
         ? `Cloud Cover model time is ${cloudCoverFreshness.ageMinutes} min old.`
         : null
-  const isPlaybackActive = isPlaying && showRadar && radar.frames.length >= 2
+  const isPlaybackActive =
+    isPlaying && mapMode === 'radar' && radar.frames.length >= 2
   const isSatellitePlaybackActive =
     isSatellitePlaying &&
-    mapMode === 'satellite' &&
+    usesSatelliteHistory &&
     satelliteHistory.frames.length >= 2
   const visibleDataIsRefreshing =
     (showRadar && radar.isRefreshing) ||
@@ -227,16 +291,18 @@ function App() {
 
   function handleModeChange(nextMode: MapMode) {
     setMapMode(nextMode)
-    if (nextMode !== 'radar' && nextMode !== 'both') {
+    if (nextMode !== 'radar') {
       setIsPlaying(false)
     }
-    if (nextMode !== 'satellite') setIsSatellitePlaying(false)
+    if (nextMode !== 'satellite' && nextMode !== 'both') {
+      setIsSatellitePlaying(false)
+    }
   }
 
   function refreshVisibleData() {
     if (showRadar) void radar.refreshRadar()
     if (showSatellite) void satellite.refreshCloud()
-    if (mapMode === 'satellite') void satelliteHistory.refreshHistory()
+    if (usesSatelliteHistory) void satelliteHistory.refreshHistory()
     if (showCloudCover) void cloudCover.refreshCloudCover()
     if (showSmoothCloud) {
       setSmoothCloudRefreshKey((refreshKey) => refreshKey + 1)
@@ -374,9 +440,9 @@ function App() {
         onMapViewportChange={setMapViewport}
         onSatelliteFrameError={handleSatelliteFrameError}
         onSmoothCloudStateChange={setSmoothCloudState}
-        radarFrame={selectedFrame}
+        radarFrame={displayedRadarFrame}
         radarPalette={radar.palette}
-        radarNotice={radarNotice}
+        radarNotice={displayedRadarNotice}
         radarOpacity={radarOpacity}
         satelliteFrame={displayedSatelliteFrame}
         satelliteNotice={satelliteNotice}
@@ -401,6 +467,9 @@ function App() {
         cloudCoverDataset={cloudCover.dataset}
         cloudCoverOpacity={cloudCoverOpacity}
         cloudCoverStatus={cloudCover.status}
+        combinedMatchDifferenceMs={closestRadarMatch?.differenceMs ?? null}
+        combinedMatchQuality={combinedMatchQuality}
+        combinedRadarFrame={matchedRadarFrame}
         frames={radar.frames}
         isPlaying={isPlaybackActive}
         isSatellitePlaying={isSatellitePlaybackActive}
@@ -411,7 +480,7 @@ function App() {
         satelliteFrames={satelliteHistory.frames}
         satelliteOpacity={satelliteOpacity}
         satelliteStatus={
-          mapMode === 'satellite' ? satelliteHistory.status : satellite.status
+          usesSatelliteHistory ? satelliteHistory.status : satellite.status
         }
         selectedSatelliteIndex={selectedSatelliteFrameIndex}
         selectedIndex={selectedFrameIndex}

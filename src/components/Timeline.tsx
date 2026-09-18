@@ -3,6 +3,7 @@ import type {
   CloudCoverStatus,
   CloudFrame,
   CloudStatus,
+  FrameMatchQuality,
   MapMode,
   RadarFrame,
   SmoothCloudState,
@@ -17,6 +18,9 @@ const frameTimeFormatter = new Intl.DateTimeFormat(undefined, {
 })
 
 interface TimelineProps {
+  combinedMatchDifferenceMs: number | null
+  combinedMatchQuality: FrameMatchQuality
+  combinedRadarFrame: RadarFrame | null
   frames: RadarFrame[]
   satelliteFrame: CloudFrame | null
   satelliteFrames: CloudFrame[]
@@ -45,6 +49,9 @@ interface TimelineProps {
 }
 
 export function Timeline({
+  combinedMatchDifferenceMs,
+  combinedMatchQuality,
+  combinedRadarFrame,
   frames,
   satelliteFrame,
   satelliteFrames,
@@ -100,7 +107,7 @@ export function Timeline({
       : new Date(satelliteFrame.timestampMs)
   const satelliteRelativeLabel = satelliteDate
     ? `Satellite · ${
-        mapMode === 'satellite' && satelliteFrames.length > 0
+        (mapMode === 'satellite' || mapMode === 'both') && satelliteFrames.length > 0
           ? selectedSatelliteIndex === satelliteFrames.length - 1
             ? 'Latest · '
             : ''
@@ -109,6 +116,21 @@ export function Timeline({
     : satelliteStatus === 'loading'
       ? 'Satellite · Loading…'
       : 'Satellite · Time unavailable'
+  const combinedRadarDate = combinedRadarFrame
+    ? new Date(combinedRadarFrame.timestampSeconds * 1000)
+    : null
+  const combinedDifferenceMinutes =
+    combinedMatchDifferenceMs === null
+      ? null
+      : Math.round(combinedMatchDifferenceMs / 60_000)
+  const combinedQualityLabel =
+    combinedMatchQuality === 'close'
+      ? 'Close match'
+      : combinedMatchQuality === 'moderate'
+        ? 'Moderate difference'
+        : combinedMatchQuality === 'large'
+          ? 'Large difference'
+          : 'Radar unavailable'
   const cloudCoverDate = cloudCoverDataset
     ? new Date(cloudCoverDataset.modelTimestampMs)
     : null
@@ -139,7 +161,7 @@ export function Timeline({
 
   return (
     <section className="timeline" aria-label="Weather layer controls">
-      {showRadar && selectedFrame && selectedDate && (
+      {mapMode === 'radar' && selectedFrame && selectedDate && (
         <div className="radar-controls">
           <button type="button" className="timeline-button timeline-button--play" onClick={onTogglePlayback} disabled={frames.length < 2} aria-pressed={isPlaying}>
             {isPlaying ? 'Pause' : 'Play'}
@@ -165,7 +187,7 @@ export function Timeline({
           </div>
         </div>
       )}
-      {mapMode === 'satellite' && satelliteFrame && satelliteDate && satelliteFrames.length > 0 && (
+      {(mapMode === 'satellite' || mapMode === 'both') && satelliteFrame && satelliteDate && satelliteFrames.length > 0 && (
         <div className="radar-controls satellite-history-controls">
           <button type="button" className="timeline-button timeline-button--play" onClick={onToggleSatellitePlayback} disabled={satelliteFrames.length < 2} aria-pressed={isSatellitePlaying}>
             {isSatellitePlaying ? 'Pause' : 'Play'}
@@ -191,7 +213,7 @@ export function Timeline({
           </div>
         </div>
       )}
-      {showSatellite && (mapMode !== 'satellite' || satelliteFrames.length === 0) && (
+      {showSatellite && (!showRadar || mapMode === 'both') && satelliteFrames.length === 0 && (
         <div className="cloud-controls">
           <div className="timeline-time" aria-live="polite">
             <strong>{satelliteRelativeLabel}</strong>
@@ -201,6 +223,41 @@ export function Timeline({
           <div className="opacity-control">
             <label htmlFor="satellite-opacity">Satellite opacity <output htmlFor="satellite-opacity">{satelliteOpacityPercent}%</output></label>
             <input id="satellite-opacity" type="range" min="0" max="1" step="0.05" value={satelliteOpacity} aria-valuetext={`${satelliteOpacityPercent}%`} onChange={(event) => onChangeSatelliteOpacity(Number(event.target.value))} />
+          </div>
+        </div>
+      )}
+      {mapMode === 'both' && (
+        <div className={`combined-match-controls combined-match-controls--${combinedMatchQuality}`}>
+          <div className="combined-match-times" aria-live={isSatellitePlaying ? 'off' : 'polite'}>
+            <div>
+              <span>Satellite</span>
+              {satelliteDate ? (
+                <time dateTime={satelliteDate.toISOString()}>
+                  {frameTimeFormatter.format(satelliteDate)}
+                </time>
+              ) : (
+                <b>Unavailable</b>
+              )}
+            </div>
+            <div>
+              <span>Radar</span>
+              {combinedRadarDate ? (
+                <time dateTime={combinedRadarDate.toISOString()}>
+                  {frameTimeFormatter.format(combinedRadarDate)}
+                </time>
+              ) : (
+                <b>Unavailable</b>
+              )}
+            </div>
+            <strong>
+              {combinedDifferenceMinutes === null || !combinedRadarDate
+                ? combinedQualityLabel
+                : `Δ ${combinedDifferenceMinutes} min · ${combinedQualityLabel}`}
+            </strong>
+          </div>
+          <div className="opacity-control">
+            <label htmlFor="combined-radar-opacity">Radar opacity <output htmlFor="combined-radar-opacity">{opacityPercent}%</output></label>
+            <input id="combined-radar-opacity" type="range" min="0" max="1" step="0.05" value={radarOpacity} aria-valuetext={`${opacityPercent}%`} onChange={(event) => onChangeOpacity(Number(event.target.value))} />
           </div>
         </div>
       )}
