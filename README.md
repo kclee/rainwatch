@@ -26,7 +26,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2f (`0.2.0-beta.6`) is implemented. Radar + Satellite uses the existing three-hour Satellite timeline as its single reference playhead. For every selected Satellite frame, a provider-agnostic utility selects the closest Radar frame, shows both exact timestamps, and reports their absolute difference as Close, Moderate, or Large. Standalone Radar and standalone Satellite retain their existing independent controls.
+RainWatch 0.2f (`0.2.0-beta.6`) is implemented and deployed. Radar + Satellite uses the existing three-hour Satellite timeline as its single reference playhead. For every selected Satellite frame, a provider-agnostic utility selects the closest Radar frame, shows both exact timestamps, and reports their absolute difference as Close, Moderate, or Large. Standalone Radar and standalone Satellite retain their existing independent controls.
 
 Live verification found both providers publishing at ten-minute intervals, with overlapping NOAA archive records ending at `:09/:19/...` and RainViewer records at `:10/:20/...`; normal matches were therefore one minute apart. RainWatch treats five minutes or less as Close, six through fifteen minutes as Moderate, and more than fifteen minutes as Large. Fifteen minutes is the configurable acceptable-match ceiling: it tolerates one missing/offset publication but not two. Equal-distance matches deterministically choose the earlier observation.
 
