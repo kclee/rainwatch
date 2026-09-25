@@ -28,7 +28,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.3a (`0.3.0-alpha.1`) is implemented. Radar is the only visible mode; one central feature configuration hides Satellite, both Cloud Cover experiments, Radar + Satellite, and Wind without deleting their source or tests. Stored hidden modes safely normalize to Radar.
+RainWatch 0.3a (`0.3.0-alpha.1`) is implemented and deployed. Radar is the only visible mode; one central feature configuration hides Satellite, both Cloud Cover experiments, Radar + Satellite, and Wind without deleting their source or tests. Stored hidden modes safely normalize to Radar.
 
 Rain Nearby analyzes a single coordinate-centered, 512-pixel RainViewer tile for each of the five newest historical frames plus one coverage mask. The latest frame reports a conservative weak, moderate, or strong Universal Blue radar return at the approximate target, or the nearest return's direction and approximate distance within 100 miles. Recent nearest-distance changes produce only conservative approaching, moving-away, unclear, or unavailable wording. It does not calculate an ETA or forecast.
 
