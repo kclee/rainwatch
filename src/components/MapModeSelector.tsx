@@ -1,5 +1,6 @@
 import type { MapMode } from '../types/weather'
 import { isMapModeEnabled } from '../config/mapModes'
+import { isMapModeVisible } from '../config/features'
 
 const modes: Array<{ value: MapMode; label: string }> = [
   { value: 'radar', label: 'Radar' },
@@ -17,7 +18,7 @@ interface MapModeSelectorProps {
 export function MapModeSelector({ value, onChange }: MapModeSelectorProps) {
   return (
     <div className="map-mode-selector" role="group" aria-label="Map mode">
-      {modes.map((mode) => {
+      {modes.filter((mode) => isMapModeVisible(mode.value)).map((mode) => {
         const isEnabled = isMapModeEnabled(mode.value)
         return (
           <button

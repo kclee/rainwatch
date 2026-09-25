@@ -160,6 +160,10 @@ h1 {
   top: 7.25rem;
 }
 
+.weather-notices--with-radar-summary {
+  top: 7.25rem;
+}
+
 .wind-card {
   position: absolute;
   z-index: 3;
@@ -173,6 +177,51 @@ h1 {
   background: rgba(248, 250, 252, 0.93);
   box-shadow: 0 0.4rem 1.2rem rgba(2, 6, 23, 0.22);
   backdrop-filter: blur(0.3rem);
+}
+
+.radar-nearby-card {
+  position: absolute;
+  z-index: 3;
+  top: 1rem;
+  left: 1rem;
+  width: min(16rem, calc(100% - 5rem));
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(3, 105, 161, 0.35);
+  border-radius: 0.75rem;
+  color: #0f172a;
+  background: rgba(248, 250, 252, 0.94);
+  box-shadow: 0 0.4rem 1.2rem rgba(2, 6, 23, 0.2);
+  backdrop-filter: blur(0.3rem);
+}
+
+.radar-nearby-card > span {
+  display: block;
+  color: #0369a1;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.radar-nearby-card strong,
+.radar-nearby-card p,
+.radar-nearby-card small {
+  display: block;
+  margin: 0.25rem 0 0;
+}
+
+.radar-nearby-card strong {
+  font-size: 0.88rem;
+}
+
+.radar-nearby-card p {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.radar-nearby-card small {
+  color: #475569;
+  font-size: 0.69rem;
 }
 
 .map-panel--cloud-cover .wind-card {
@@ -584,7 +633,7 @@ h1 {
 
 .radar-controls {
   display: grid;
-  grid-template-columns: auto auto minmax(10rem, 1fr) minmax(8rem, auto) auto minmax(8rem, 0.7fr);
+  grid-template-columns: auto auto minmax(10rem, 1fr) minmax(8rem, auto) auto auto minmax(8rem, 0.7fr);
   align-items: center;
   gap: 0.75rem;
 }
@@ -790,12 +839,12 @@ h1 {
   }
 
   .map-mode-selector {
-    width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: fit-content;
+    grid-template-columns: minmax(7rem, 1fr);
   }
 
   .map-mode-selector button:last-child {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .radar-refresh-controls {
@@ -886,10 +935,21 @@ h1 {
     top: 6.5rem;
   }
 
+  .weather-notices--with-radar-summary {
+    top: 6.5rem;
+  }
+
   .wind-card {
     top: 0.65rem;
     right: 3.25rem;
     width: 12.5rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .radar-nearby-card {
+    top: 0.65rem;
+    left: 0.65rem;
+    width: min(14rem, calc(100% - 4.5rem));
     padding: 0.5rem 0.6rem;
   }
 
@@ -924,7 +984,7 @@ h1 {
   .radar-controls {
     min-width: 0;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
   }
 
@@ -991,6 +1051,10 @@ h1 {
 
   .timeline-button--next {
     grid-column: 3;
+  }
+
+  .timeline-button--latest {
+    grid-column: 4;
   }
 
   .opacity-control {

@@ -44,6 +44,7 @@ interface TimelineProps {
   onChangeCloudCoverOpacity: (opacity: number) => void
   onChangeSmoothCloudOpacity: (opacity: number) => void
   onSelectFrame: (index: number) => void
+  onSelectLatestFrame: () => void
   onSelectSatelliteFrame: (index: number) => void
   onTogglePlayback: () => void
   onToggleSatellitePlayback: () => void
@@ -76,6 +77,7 @@ export function Timeline({
   onChangeCloudCoverOpacity,
   onChangeSmoothCloudOpacity,
   onSelectFrame,
+  onSelectLatestFrame,
   onSelectSatelliteFrame,
   onTogglePlayback,
   onToggleSatellitePlayback,
@@ -184,6 +186,9 @@ export function Timeline({
           </div>
           <button type="button" className="timeline-button timeline-button--next" onClick={() => onSelectFrame(selectedIndex + 1)} disabled={selectedIndex === frames.length - 1}>
             Next
+          </button>
+          <button type="button" className="timeline-button timeline-button--latest" onClick={onSelectLatestFrame} disabled={selectedIndex === frames.length - 1}>
+            Latest
           </button>
           <div className="opacity-control">
             <label htmlFor="radar-opacity">Radar opacity <output htmlFor="radar-opacity">{opacityPercent}%</output></label>

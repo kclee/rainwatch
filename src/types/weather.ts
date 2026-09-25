@@ -17,6 +17,8 @@ export interface RadarFrame {
   timestampSeconds: number
   tileUrl: string
   attribution: string
+  analysisTileUrl?: string
+  coverageTileUrl?: string
 }
 
 export type RadarStatus = 'loading' | 'ready' | 'empty' | 'error'

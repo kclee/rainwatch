@@ -1,4 +1,5 @@
 import type { MapMode } from '../types/weather.ts'
+import { isMapModeVisible } from './features.ts'
 
 export const MAP_MODE_STORAGE_KEY = 'rainwatch-map-mode'
 export const PAUSED_MAP_MODES = new Set<MapMode>([
@@ -15,7 +16,7 @@ const mapModes = new Set<MapMode>([
 ])
 
 export function isMapModeEnabled(mode: MapMode) {
-  return !PAUSED_MAP_MODES.has(mode)
+  return isMapModeVisible(mode)
 }
 
 export function normalizeMapMode(value: unknown): MapMode {

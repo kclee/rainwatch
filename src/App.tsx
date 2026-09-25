@@ -4,6 +4,7 @@ import { MapModeSelector } from './components/MapModeSelector'
 import { Timeline } from './components/Timeline'
 import { WeatherMap } from './components/WeatherMap'
 import { WindCard } from './components/WindCard'
+import { RadarNearbyCard } from './components/RadarNearbyCard'
 import {
   DEFAULT_CLOUD_OPACITY,
   SATELLITE_PLAYBACK_INTERVAL_MS,
@@ -22,6 +23,7 @@ import {
   MAX_FRAME_MATCH_DIFFERENCE_MS,
 } from './config/frameMatching'
 import { DEFAULT_SMOOTH_CLOUD_OPACITY } from './config/smoothCloud'
+import { features } from './config/features'
 import {
   isMapModeEnabled,
   MAP_MODE_STORAGE_KEY,
@@ -31,6 +33,7 @@ import { useCloudCover } from './hooks/useCloudCover'
 import { useCloudImagery } from './hooks/useCloudImagery'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useRadarFrames } from './hooks/useRadarFrames'
+import { useRadarNearby } from './hooks/useRadarNearby'
 import { useSatelliteHistory } from './hooks/useSatelliteHistory'
 import { useWind } from './hooks/useWind'
 import type {
@@ -72,10 +75,33 @@ function App() {
   const cloudCover = useCloudCover(showCloudCover, cloudCoverGridSizeOverride)
   const [mapViewport, setMapViewport] = useState<CloudCoverViewport | null>(null)
   const windTarget = useMemo(
-    () => (mapViewport ? selectWindTarget(mapViewport, location) : null),
+    () => (features.wind && mapViewport ? selectWindTarget(mapViewport, location) : null),
     [location, mapViewport],
   )
   const wind = useWind(windTarget)
+  const radarAnalysisTarget = useMemo(() => {
+    if (location) {
+      return {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        source: 'user-location' as const,
+      }
+    }
+    if (!mapViewport) return null
+    const longitude = mapViewport.west <= mapViewport.east
+      ? (mapViewport.west + mapViewport.east) / 2
+      : ((mapViewport.west + mapViewport.east + 360) / 2 + 540) % 360 - 180
+    return {
+      latitude: (mapViewport.south + mapViewport.north) / 2,
+      longitude,
+      source: 'map-center' as const,
+    }
+  }, [location, mapViewport])
+  const radarNearby = useRadarNearby(
+    radar.frames,
+    radarAnalysisTarget,
+    radar.lastSuccessfulRefreshAt,
+  )
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [selectedSatelliteFrameId, setSelectedSatelliteFrameId] = useState<
@@ -102,7 +128,7 @@ function App() {
   })
   const [nowMs, setNowMs] = useState(Date.now)
   const isRequesting = status === 'requesting'
-  const buttonLabel = location ? 'Return to my location' : 'Use my location'
+  const buttonLabel = 'My Area'
   const requestedFrameIndex = selectedFrameId
     ? radar.frames.findIndex((frame) => frame.id === selectedFrameId)
     : -1
@@ -345,7 +371,7 @@ function App() {
 
   useEffect(() => {
     if (!isPlaybackActive) return
-    const interval = window.setInterval(() => {
+    const timeout = window.setTimeout(() => {
       setSelectedFrameId((currentId) => {
         const requestedIndex = currentId
           ? radar.frames.findIndex((frame) => frame.id === currentId)
@@ -355,9 +381,11 @@ function App() {
         const nextIndex = (activeIndex + 1) % radar.frames.length
         return radar.frames[nextIndex]?.id ?? null
       })
-    }, RADAR_PLAYBACK_INTERVAL_MS)
-    return () => window.clearInterval(interval)
-  }, [isPlaybackActive, radar.frames])
+    }, selectedFrameIndex === radar.frames.length - 1
+      ? RADAR_PLAYBACK_INTERVAL_MS * 2
+      : RADAR_PLAYBACK_INTERVAL_MS)
+    return () => window.clearTimeout(timeout)
+  }, [isPlaybackActive, radar.frames, selectedFrameIndex])
 
   useEffect(() => {
     if (!isSatellitePlaybackActive) return
@@ -447,7 +475,7 @@ function App() {
             className={`location-status${status === 'idle' ? ' location-status--idle' : ''}`}
             aria-live="polite"
           >
-            {message ?? 'RainWatch does not store your location.'}
+            {message ?? 'Your approximate area is used for weather requests and is not stored.'}
           </p>
         </div>
       </header>
@@ -470,6 +498,12 @@ function App() {
         radarPalette={radar.palette}
         radarNotice={displayedRadarNotice}
         radarOpacity={radarOpacity}
+        radarSummary={radarAnalysisTarget ? (
+          <RadarNearbyCard
+            state={radarNearby}
+            targetSource={radarAnalysisTarget.source}
+          />
+        ) : null}
         satelliteFrame={displayedSatelliteFrame}
         satelliteNotice={satelliteNotice}
         satelliteOpacity={satelliteOpacity}
@@ -477,7 +511,7 @@ function App() {
         smoothCloudRefreshKey={smoothCloudRefreshKey}
         smoothCloudState={smoothCloudState}
         userLocation={location}
-        windCard={(
+        windCard={features.wind ? (
           <WindCard
             isRefreshing={wind.isRefreshing}
             message={wind.message}
@@ -487,7 +521,7 @@ function App() {
             refreshError={wind.refreshError}
             status={wind.status}
           />
-        )}
+        ) : null}
       />
       <Timeline
         cloudCoverDataset={cloudCover.dataset}
@@ -518,6 +552,10 @@ function App() {
         onSelectFrame={(index) =>
           setSelectedFrameId(radar.frames[index]?.id ?? null)
         }
+        onSelectLatestFrame={() => {
+          setSelectedFrameId(radar.frames.at(-1)?.id ?? null)
+          setIsPlaying(false)
+        }}
         onSelectSatelliteFrame={(index) =>
           setSelectedSatelliteFrameId(satelliteHistory.frames[index]?.id ?? null)
         }

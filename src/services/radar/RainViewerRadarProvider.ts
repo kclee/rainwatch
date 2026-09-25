@@ -6,6 +6,8 @@ const WEATHER_MAPS_URL =
 const TWO_HOURS_SECONDS = 2 * 60 * 60
 const COLOR_SCHEME = 2
 const TILE_OPTIONS = '1_1'
+const ANALYSIS_ZOOM = 6
+const ANALYSIS_SIZE = 512
 
 const UNIVERSAL_BLUE_PALETTE: RadarPalette = {
   name: 'Universal Blue',
@@ -81,6 +83,8 @@ export class RainViewerRadarProvider implements RadarProvider {
         id: `${frame.time}-${frame.path}`,
         timestampSeconds: frame.time,
         tileUrl: `${host.origin}${frame.path}/256/{z}/{x}/{y}/${COLOR_SCHEME}/${TILE_OPTIONS}.png`,
+        analysisTileUrl: `${host.origin}${frame.path}/${ANALYSIS_SIZE}/${ANALYSIS_ZOOM}/{lat}/{lon}/${COLOR_SCHEME}/0_0.png`,
+        coverageTileUrl: `${host.origin}/v2/coverage/0/${ANALYSIS_SIZE}/${ANALYSIS_ZOOM}/{lat}/{lon}/0/0_0.png`,
         attribution:
           '<a href="https://www.rainviewer.com/" target="_blank">Radar © RainViewer</a>',
       }))

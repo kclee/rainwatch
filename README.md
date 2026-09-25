@@ -4,7 +4,7 @@ RainWatch is a small, local-first weather radar web application prototype. Its f
 
 > What rain is currently around me, and how has it been moving during the past two hours?
 
-The application is built incrementally as a static client-side web app. Version 0.2g hardens Satellite failure handling and pauses the two Cloud Cover experiments while their implementations remain available for later work.
+The application is built incrementally as a static client-side web app. Version 0.3a makes Radar the only visible primary mode and adds a compact, browser-side Rain Nearby analysis while preserving the hidden Satellite, Cloud Cover, Smooth Cloud, combined-mode, and Wind implementations for later work.
 
 ## Built through human-AI collaboration
 
@@ -13,6 +13,7 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 ## Documentation
 
 - [`progress.html`](progress.html) is the concise visual project dashboard.
+- [`docs/journal/2026-09-25-0.3a.md`](docs/journal/2026-09-25-0.3a.md) records the Radar-first interface, Rain Nearby technique, performance, and verification.
 - [`docs/journal/2026-09-18-0.2g.md`](docs/journal/2026-09-18-0.2g.md) records bounded Satellite retries, last-available behavior, paused experiment controls, and verification.
 - [`docs/journal/2026-09-18-0.2f.md`](docs/journal/2026-09-18-0.2f.md) records combined timestamp matching, bandwidth, failure handling, and verification.
 - [`docs/journal/2026-09-17-0.2e.md`](docs/journal/2026-09-17-0.2e.md) records the historical satellite-animation milestone, bandwidth measurements, and verification.
@@ -27,7 +28,9 @@ RainWatch is a Codex-assisted project. The project owner defines the goals, cons
 
 ## Current status
 
-RainWatch 0.2g (`0.2.0-beta.7`) is implemented and deployed. Satellite metadata now retries transient network, timeout, retryable HTTP, and provider failures twice with short backoff. Image rendering retries once. Permanent HTTP/provider failures do not retry, all loops are bounded, and the last valid latest image or history remains visible after a failed refresh with an explicit **Last available** label and its real observation age.
+RainWatch 0.3a (`0.3.0-alpha.1`) is implemented. Radar is the only visible mode; one central feature configuration hides Satellite, both Cloud Cover experiments, Radar + Satellite, and Wind without deleting their source or tests. Stored hidden modes safely normalize to Radar.
+
+Rain Nearby analyzes a single coordinate-centered, 512-pixel RainViewer tile for each of the five newest historical frames plus one coverage mask. The latest frame reports a conservative weak, moderate, or strong Universal Blue radar return at the approximate target, or the nearest return's direction and approximate distance within 100 miles. Recent nearest-distance changes produce only conservative approaching, moving-away, unclear, or unavailable wording. It does not calculate an ETA or forecast.
 
 Radar, Satellite, and Radar + Satellite remain active. Cloud Cover and Smooth Cloud · Lab stay visible but are disabled and labelled as paused. Their providers, hooks, UI, tests, documentation, and research artifacts remain in the repository; a stored paused mode safely falls back to Radar.
 
@@ -111,6 +114,7 @@ RainWatch uses:
 - MapLibre GL JS for the interactive map
 - The browser Geolocation API for the user's position
 - RainViewer as the first radar-data provider
+- Browser-side Universal Blue Radar analysis for target overlap, nearest precipitation, and recent trend
 - NOAA/NESDIS `Most_Recent_MERGEDGC` and `MERGEDGC_Last_24hr` as the latest and historical satellite providers
 - Open-Meteo Best Match forecast models as the Total Cloud Cover provider
 - Open-Meteo Weather Map Layer 0.1.1 with NOAA HRRR CONUS as the experimental smooth Cloud Cover provider

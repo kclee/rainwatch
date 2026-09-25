@@ -85,6 +85,7 @@ interface WeatherMapProps {
   radarPalette: RadarPalette
   radarNotice: string | null
   radarOpacity: number
+  radarSummary: ReactNode
   smoothCloudOpacity: number
   smoothCloudRefreshKey: number
   smoothCloudState: SmoothCloudState
@@ -164,6 +165,7 @@ export function WeatherMap({
   radarPalette,
   radarNotice,
   radarOpacity,
+  radarSummary,
   smoothCloudOpacity,
   smoothCloudRefreshKey,
   smoothCloudState,
@@ -709,11 +711,12 @@ export function WeatherMap({
       data-satellite-frame-source={satelliteFrame?.source}
     >
       <div ref={containerRef} className="map-container" />
+      {radarSummary}
       {windCard}
       {!isMapReady && !mapError && <div className="map-message map-message--loading" role="status">Loading map…</div>}
       {mapError && <div className="map-message" role="status">The map is temporarily unavailable. {mapError}</div>}
       {!mapError && (
-        <div className={`weather-notices${mapMode === 'cloud-cover' && cloudCoverSummary ? ' weather-notices--with-summary' : ''}`}>
+        <div className={`weather-notices${mapMode === 'cloud-cover' && cloudCoverSummary ? ' weather-notices--with-summary' : ''}${mapMode === 'radar' && radarSummary ? ' weather-notices--with-radar-summary' : ''}`}>
           {(mapMode === 'radar' || mapMode === 'both') && (radarTileError || radarNotice) && <div className="radar-notice" role="status">{radarTileError ?? radarNotice}</div>}
           {(mapMode === 'satellite' || mapMode === 'both') && (satelliteImageError || satelliteNotice) && <div className="radar-notice" role="status">{satelliteImageError ?? satelliteNotice}</div>}
           {mapMode === 'cloud-cover' && cloudCoverError && <div className="radar-notice" role="status">{cloudCoverError}</div>}

@@ -54,12 +54,12 @@
     <header>
       <h1>RainWatch</h1>
       <p class="lede">A Codex-assisted, local-first weather radar viewer for understanding nearby rain and its movement over the past two hours.</p>
-      <span class="status">Version 0.2g deployed · Satellite reliability cleanup active</span>
+      <span class="status">Version 0.3a · Radar First + Rain Nearby</span>
     </header>
 
     <section class="next" aria-labelledby="next-heading">
       <h2 id="next-heading">Next milestone</h2>
-      <p><strong>Real-device evaluation.</strong> Confirm combined matched playback, user-location behavior, and cache reuse in the installed iPhone PWA. Motion vectors, forecasts, and ETA remain deferred.</p>
+      <p><strong>Real-device evaluation.</strong> Confirm My Area behavior and Rain Nearby responsiveness in the installed iPhone PWA. Forecasts and ETA remain explicitly deferred.</p>
     </section>
 
     <section class="grid" aria-label="Project overview">
@@ -67,7 +67,7 @@
         <h2>Project location and goal</h2>
         <p><strong>Repository</strong> <code>C:\D_Data\AI-Projects\rainwatch</code></p>
         <p><strong>GitHub</strong> <a href="https://github.com/kclee/rainwatch">github.com/kclee/rainwatch</a></p>
-        <p>Version 0.2g adds bounded Satellite metadata and image retries, keeps last-valid imagery visible after refresh failures, and temporarily disables both Cloud Cover experiment buttons without deleting their implementations.</p>
+        <p>Version 0.3a makes Radar the only visible primary mode and adds bounded, browser-side nearby precipitation and recent-trend analysis. Satellite, Cloud Cover, Smooth Cloud, combined mode, and Wind remain preserved but hidden.</p>
       </article>
 
       <article class="card">
@@ -82,6 +82,13 @@
           <li class="done">Return-to-location control</li>
           <li class="done">Denied, unavailable, and timeout messages</li>
           <li class="done">RainViewer provider abstraction</li>
+          <li class="done">Central Radar-first feature visibility configuration</li>
+          <li class="done">Rain Nearby target-overlap and 100-mile bounded search</li>
+          <li class="done">Universal Blue weak, moderate, and strong reflectivity interpretation</li>
+          <li class="done">Nearest precipitation direction and approximate distance</li>
+          <li class="done">Conservative five-frame approaching/moving-away trend</li>
+          <li class="done">RainViewer coverage-mask check at the analysis target</li>
+          <li class="done">Latest shortcut and longer end-of-loop hold</li>
           <li class="done">Newest historical radar frame</li>
           <li class="done">Historical frame slider and timestamps</li>
           <li class="done">Previous and next frame controls</li>
@@ -176,7 +183,7 @@
           <li><strong>UI:</strong> React state and components</li>
           <li><strong>Map:</strong> MapLibre GL JS 6.9.0</li>
           <li><strong>Basemap:</strong> configurable OpenFreeMap development style</li>
-          <li><strong>Radar:</strong> RainViewer historical frames behind a provider interface</li>
+          <li><strong>Radar:</strong> RainViewer historical frames plus fixed-zoom, coordinate-centered Universal Blue analysis behind service utilities</li>
           <li><strong>Satellite:</strong> observed NOAA/NESDIS merged GOES GeoColor latest image plus rolling archive</li>
           <li><strong>Cloud Cover:</strong> Open-Meteo Best Match model percentages behind a provider interface</li>
           <li><strong>Smooth Cloud lab:</strong> Open-Meteo Weather Map Layer 0.1.1, NOAA HRRR CONUS, and partial <code>.om</code> range reads</li>
@@ -190,7 +197,9 @@
       <article class="card wide">
         <h2>Latest verification</h2>
         <ul>
-          <li>Thirty-seven automated checks, lint, production build, and local browser checks passed.</li>
+          <li>Forty-five automated checks, lint, production build, and local browser checks passed for 0.3a.</li>
+          <li>At 390 × 844, Rain Nearby stayed compact, only Radar remained visible, all four playback buttons measured 44 pixels high, and no horizontal overflow appeared.</li>
+          <li>A representative Rain Nearby run used six requests and 264,366 bytes for five frames plus coverage; the warm browser run completed in 64 ms.</li>
           <li>Bounded retries stopped after the configured attempts during a live NOAA interruption; combined mode preserved Radar and used the latest-image fallback.</li>
           <li>At 390 × 844, all five 44-pixel mode buttons remained usable without horizontal overflow; both experiments were visibly disabled.</li>
           <li>GitHub Pages run 35317069446 deployed implementation commit <code>2306d9d</code> successfully.</li>
